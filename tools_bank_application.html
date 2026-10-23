@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bank application | SevaSphere</title><meta name="description" content="Standard English and Hindi letters for common bank work.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/csc-system.css">
+<style>@page{size:A4;margin:0}.doc{width:210mm;min-height:297mm;padding:25mm 22mm;background:#fff;color:#111;font:12.5pt/1.8 "Segoe UI","Noto Sans Devanagari",Arial,sans-serif;max-width:100%}.doc p{margin-bottom:12px}.doc .sb{font-weight:bold;text-decoration:underline}</style></head><body>
+<a class="skip-link" href="#main">Skip to content</a><header id="site-header"></header>
+<main id="main"><div class="page-head no-print"><div class="crumbs"><a href="index.html">Home</a> / Documents</div><h1>Bank application</h1><p>Standard English and Hindi letters for common bank work.</p></div>
+<div class="split"><section class="panel no-print"><div class="field"><label for="ty">Application type</label><select id="ty"><option value="close">Close account</option><option value="atm">ATM / debit card</option><option value="addr">Change of address</option><option value="chq">Cheque book</option><option value="pass">Passbook</option><option value="mob">Update mobile number</option><option value="kyc">KYC update</option><option value="stmt">Account statement</option></select></div><div class="field"><label for="lg">Language</label><select id="lg"><option value="en">English</option><option value="hi">Hindi / हिंदी</option></select></div><div class="field"><label for="bk">Bank name</label><input id="bk" type="text" value="State Bank of India" placeholder=""></div><div class="field"><label for="br">Branch</label><input id="br" type="text" value="Rohtak Main Branch" placeholder=""></div><div class="field"><label for="nm">Applicant name</label><input id="nm" type="text" value="Rakesh Kumar" placeholder=""></div><div class="field"><label for="ac">Account number</label><input id="ac" type="text" value="00000000000" placeholder=""></div><div class="field"><label for="mo">Mobile</label><input id="mo" type="text" value="98765 43210" placeholder=""></div><div class="field"><label for="ex"></label><input id="ex" type="text" value="" placeholder=""></div><div class="row2"><div class="field"><label for="pl">Place</label><input id="pl" type="text" value="Rohtak" placeholder=""></div><div class="field"><label for="dt">Date</label><input id="dt" type="date" value="" placeholder=""></div></div><button class="btn" id="pr"><i class="fa-solid fa-print"></i> Print application</button></section><section style="overflow-x:auto"><div class="paper doc" id="sheet"></div></section></div>
+</main><footer id="site-footer"></footer>
+<script src="assets/js/site.js"></script><script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dl=(blob,name)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);};
+const X={close:['Reason (optional)','Account closure','खाता बंद करने हेतु'],atm:['Reason (new / lost / damaged)','Request for ATM / debit card','एटीएम / डेबिट कार्ड हेतु'],addr:['New address','Change of address','पता बदलने हेतु'],chq:['Number of leaves (e.g. 25)','Request for cheque book','चेक बुक हेतु'],pass:['Reason (full / lost / update)','Request for passbook','पासबुक हेतु'],mob:['New mobile number','Update of mobile number','मोबाइल नंबर अपडेट हेतु'],kyc:['Documents attached (e.g. Aadhaar, PAN)','KYC update','केवाईसी अपडेट हेतु'],stmt:['Period (e.g. 01-04-2026 to 30-09-2026)','Request for account statement','खाता विवरण हेतु']};
+const B={en:{close:(n,a,b,e)=>'I, '+n+', hold an account number '+a+' in your branch. I request you to close my account and pay the remaining balance to me'+(e?' ('+e+')':'')+'. I am returning my unused cheque book and debit card, if any.',
+atm:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to issue a new ATM / debit card for my account'+(e?' ('+e+')':'')+'. Kindly do the needful.',
+addr:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to change my address in the bank records. My new address is: '+e+'. I am attaching the address proof.',
+chq:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to issue a new cheque book'+(e?' of '+e+' leaves':'')+' for my account.',
+pass:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to issue / update my passbook'+(e?' ('+e+')':'')+'.',
+mob:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to update my mobile number in the bank records. My new mobile number is '+e+'.',
+kyc:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to update my KYC details. I am attaching the self-attested copies of '+(e||'my documents')+'.',
+stmt:(n,a,b,e)=>'I hold an account number '+a+' in your branch. I request you to issue my account statement'+(e?' for the period '+e:'')+'.'},
+hi:{close:(n,a,b,e)=>'मैं '+n+', आपकी शाखा में खाता संख्या '+a+' का धारक हूँ। मैं अपना खाता बंद करवाना चाहता/चाहती हूँ। कृपया शेष राशि मुझे दे दें'+(e?' ('+e+')':'')+'। मैं अपनी बिना उपयोग की चेक बुक व डेबिट कार्ड (यदि हो) वापस कर रहा/रही हूँ।',
+atm:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया मेरे खाते का नया एटीएम / डेबिट कार्ड जारी करने की कृपा करें'+(e?' ('+e+')':'')+'।',
+addr:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया बैंक रिकॉर्ड में मेरा पता बदलने की कृपा करें। मेरा नया पता: '+e+'। पते का प्रमाण संलग्न है।',
+chq:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया मेरे खाते की नई चेक बुक'+(e?' ('+e+' पत्ते)':'')+' जारी करने की कृपा करें।',
+pass:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया मेरी पासबुक जारी / अपडेट करने की कृपा करें'+(e?' ('+e+')':'')+'।',
+mob:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया बैंक रिकॉर्ड में मेरा मोबाइल नंबर अपडेट करें। मेरा नया मोबाइल नंबर '+e+' है।',
+kyc:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया मेरी केवाईसी जानकारी अपडेट करने की कृपा करें। '+(e||'मेरे दस्तावेज')+' की स्वप्रमाणित प्रतियाँ संलग्न हैं।',
+stmt:(n,a,b,e)=>'मेरा आपकी शाखा में खाता संख्या '+a+' है। कृपया मेरे खाते का विवरण (स्टेटमेंट)'+(e?' '+e+' की अवधि का':'')+' जारी करने की कृपा करें।'}};
+$('dt').value=new Date().toISOString().slice(0,10);
+const dmy=s=>{if(!s)return '';const p=s.split('-');return p[2]+'-'+p[1]+'-'+p[0];};
+function lab(){document.querySelector('label[for=ex]').textContent=X[$('ty').value][0];draw();}
+function draw(){const t=$('ty').value,hi=$('lg').value==='hi',n=$('nm').value,a=$('ac').value,e=$('ex').value.trim();
+const body=B[$('lg').value][t](n,a,$('bk').value,e);
+$('sheet').innerHTML=(hi?'<p>सेवा में,<br>शाखा प्रबंधक,<br>'+esc($('bk').value)+',<br>'+esc($('br').value)+'</p><p><span class="sb">विषय: '+X[t][2]+' प्रार्थना पत्र।</span></p><p>महोदय / महोदया,</p>':'<p>To,<br>The Branch Manager,<br>'+esc($('bk').value)+',<br>'+esc($('br').value)+'</p><p><span class="sb">Subject: Application for '+X[t][1].toLowerCase()+'.</span></p><p>Respected Sir / Madam,</p>')+'<p style="text-align:justify">'+esc(body)+'</p><p>'+(hi?'धन्यवाद।':'Thank you.')+'</p><p style="margin-top:30px">'+(hi?'भवदीय,':'Yours faithfully,')+'<br><br><br><b>'+esc(n)+'</b><br>'+(hi?'खाता संख्या: ':'A/c No.: ')+esc(a)+'<br>'+(hi?'मोबाइल: ':'Mobile: ')+esc($('mo').value)+'</p><p>'+(hi?'स्थान: ':'Place: ')+esc($('pl').value)+'<br>'+(hi?'दिनांक: ':'Date: ')+esc(dmy($('dt').value))+'</p>';}
+$('ty').onchange=lab;['lg','bk','br','nm','ac','mo','ex','pl','dt'].forEach(k=>$(k).oninput=draw);$('lg').onchange=draw;$('pr').onclick=()=>window.print();lab();
+</script></body></html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age Calculator for Exams | SevaSphere</title>
+<meta name="description" content="Calculate exact age in years, months, and days based on any cut-off date.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/csc-system.css">
+<style>
+
+
+
+
+
+
+
+
+        /* Calculator Card */
+        .calc-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn-calculate {
+            background-color: #0b6e4f;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-calculate:hover {
+            background-color: #07513a;
+        }
+
+        /* Result Display Area */
+        .result-box {
+            margin-top: 30px;
+            background: #e4f1ea;
+            border: 1px solid #b9d8c9;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-box h3 {
+            color: #0b6e4f;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .age-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .age-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .age-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            border-top: 3px solid #0b6e4f;
+        }
+
+        .age-card span {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .age-card label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+    </style>
+<style>
+/* SevaSphere compatibility skin: portal chrome adapts to light/dark, tool cards stay paper-white */
+@page{size:A4;margin:0}
+@media print{body{min-height:0}.sheet-a4{padding:4mm!important;gap:2mm 3mm!important}}
+</style>
+<style id="pageStyle"></style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="site-header"></header>
+<main id="main">
+
+    <div class="container">
+        <div class="page-head no-print"><div class="crumbs"><a href="index.html">Home</a> / Calculators</div><h1>Age Calculator for Government Exams</h1><p>Calculate exact age in years, months, and days based on any cut-off date.</p></div>
+
+        <div class="calc-card">
+            <div class="input-group">
+                <label>Date of Birth (DOB)</label>
+                <input type="date" id="dobInput">
+            </div>
+
+            <div class="input-group">
+                <label>Calculate Age As On (Cut-off Date)</label>
+                <input type="date" id="targetDateInput">
+            </div>
+
+            <button class="btn-calculate" onclick="calculateAge()"><i class="fa-solid fa-clock"></i> Calculate Exact Age</button>
+
+            <div id="resultArea" class="result-box">
+                <h3>Your Exact Age</h3>
+                <div class="age-grid">
+                    <div class="age-card">
+                        <span id="yearsVal">0</span>
+                        <label>Years</label>
+                    </div>
+                    <div class="age-card">
+                        <span id="monthsVal">0</span>
+                        <label>Months</label>
+                    </div>
+                    <div class="age-card">
+                        <span id="daysVal">0</span>
+                        <label>Days</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+<footer id="site-footer"></footer>
+<script>
+        // Set default target date to today
+        (function(){const t=new Date();document.getElementById('targetDateInput').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');})();
+
+        function parseLocal(v){const p=v.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+
+        function calculateAge() {
+            const dobVal = document.getElementById('dobInput').value;
+            const targetVal = document.getElementById('targetDateInput').value;
+
+            if (!dobVal || !targetVal) {
+                alert('Please select both Date of Birth and Cut-off Date.');
+                return;
+            }
+
+            const dob = parseLocal(dobVal);
+            const target = parseLocal(targetVal);
+
+            if (dob > target) {
+                alert('Date of Birth cannot be later than the Cut-off Date!');
+                return;
+            }
+
+            let years = target.getFullYear() - dob.getFullYear();
+            let months = target.getMonth() - dob.getMonth();
+            let days = target.getDate() - dob.getDate();
+
+            if (days < 0) {
+                months--;
+                // Get days in previous month of target date
+                const prevMonth = new Date(target.getFullYear(), target.getMonth(), 0);
+                days += prevMonth.getDate();
+            }
+
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            document.getElementById('yearsVal').innerText = years;
+            document.getElementById('monthsVal').innerText = months;
+            document.getElementById('daysVal').innerText = days;
+
+            document.getElementById('resultArea').style.display = 'block';
+        }
+    </script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

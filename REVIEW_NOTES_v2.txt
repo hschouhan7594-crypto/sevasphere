@@ -1,0 +1,3 @@
+ARCHIVED — PREVIOUS DEMO V2 NOTES
+
+This file records the previous unbranded global-system iteration. It is superseded by REVIEW_NOTES_v3.txt and the SevaSphere Global System Guide. Use the v3 brand package and documentation for current testing.

@@ -1,0 +1,5 @@
+Original source history: supplied legacy tool bundle retained as the compatibility baseline.
+SevaSphere Global System Demo v3 brand layer:
+- Rebranded visible site chrome, homepage metadata, favicon, template starter and documentation.
+- Preserved tool-specific behavior and existing file paths.
+- See REVIEW_NOTES_v3.txt and GLOBAL_SYSTEM_GUIDE.md for scope and release checks.

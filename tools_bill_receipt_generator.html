@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Utility Bill Payment Receipt Generator | SevaSphere</title>
+  <meta name="description" content="Free bill payment receipt maker for CSC and cyber cafe. Two copies on one A4: customer copy and office copy. Electricity, water, gas, mobile and DTH.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/csc-system.css">
+  <style>
+    .layout{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:18px;align-items:start}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .rcpt{background:#fff;color:#111;border:1.5px solid #222;border-radius:6px;padding:16px 18px}
+    .rcpt header{text-align:center;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px}
+    .rcpt .shop{font-size:1.35rem;font-weight:800;line-height:1.2}
+    .rcpt .meta{font-size:.82rem;color:#333}
+    .rcpt .title{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin:6px 0 8px}
+    .rcpt .copy{font-size:.72rem;border:1.5px solid #111;padding:1px 8px;border-radius:99px}
+    .rcpt table{width:100%;border-collapse:collapse;font-size:.92rem}
+    .rcpt td{padding:4px 0;border-bottom:1px dotted #aaa;vertical-align:top}
+    .rcpt td:first-child{width:38%;color:#444}
+    .rcpt .total td{border-top:2px solid #111;border-bottom:0;font-weight:800;font-size:1.05rem;padding-top:7px}
+    .rcpt .words{font-size:.82rem;margin-top:6px}
+    .rcpt .sign{display:flex;justify-content:space-between;margin-top:26px;font-size:.78rem;color:#333}
+    .rcpt .sign span{border-top:1px solid #111;padding-top:3px;min-width:34%;text-align:center}
+    .rcpt .thanks{text-align:center;font-size:.72rem;color:#555;margin-top:8px}
+    .cut{border-top:2px dashed #888;margin:10px 0;text-align:center;font-size:.7rem;color:#777;line-height:0}
+    .cut span{background:var(--bg);padding:0 8px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+    @media print{
+      @page{size:A4;margin:8mm}
+      .layout{display:block}.form,.page-head{display:none!important}
+      .rcpt{height:134mm;border-radius:0;page-break-inside:avoid}
+      .cut span{background:#fff}
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+  <main id="main">
+    <div class="page-head no-print">
+      <div class="crumbs"><a href="index.html">Home</a> / CSC counter</div>
+      <h1>Utility bill payment receipt</h1>
+      <p>Fill the form. Two receipts, one for the customer and one for your office, print on a single A4 sheet.</p>
+    </div>
+
+    <div class="layout">
+      <section class="panel form no-print">
+        <div class="field"><label for="shop">Shop / CSC name</label><input id="shop" placeholder="e.g. Sharma CSC Centre"></div>
+        <div class="field"><label for="addr">Address</label><input id="addr" placeholder="Village / Town, District"></div>
+        <div class="row2">
+          <div class="field"><label for="phone">Phone</label><input id="phone" inputmode="tel" placeholder="Mobile number"></div>
+          <div class="field"><label for="rno">Receipt no.</label><input id="rno"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="date">Date</label><input id="date" type="date"></div>
+          <div class="field"><label for="type">Bill type</label>
+            <select id="type"><option>Electricity (UHBVN)</option><option>Electricity (DHBVN)</option><option>Water</option><option>Gas</option><option>Mobile recharge</option><option>DTH recharge</option><option>Broadband</option><option>Insurance premium</option><option>Other</option></select></div>
+        </div>
+        <div class="field"><label for="cust">Customer name</label><input id="cust"></div>
+        <div class="field"><label for="acct">Account / consumer / mobile no.</label><input id="acct"></div>
+        <div class="field"><label for="period">Bill month / period</label><input id="period" placeholder="e.g. Oct 2026"></div>
+        <div class="row2">
+          <div class="field"><label for="amt">Bill amount (Rs.)</label><input id="amt" type="number" min="0" step="0.01" inputmode="decimal"></div>
+          <div class="field"><label for="fee">Service charge (Rs.)</label><input id="fee" type="number" min="0" step="0.01" inputmode="decimal" value="0"></div>
+        </div>
+        <div class="field"><label for="mode">Payment mode</label>
+          <select id="mode"><option>Cash</option><option>UPI</option><option>Card</option></select></div>
+        <div class="field"><label for="note">Remarks (optional)</label><input id="note"></div>
+        <div class="actions">
+          <button class="btn" id="print"><i class="fa-solid fa-print" aria-hidden="true"></i>Print receipts</button>
+          <button class="btn alt" id="clear" type="button">Clear customer</button>
+          <button class="btn alt" id="demo" type="button"><i class="fa-solid fa-flask" aria-hidden="true"></i>Fill demo (practice)</button>
+        </div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:10px">Shop details are remembered on this computer. In the print window choose A4, Scale 100%, and turn off Headers and footers.</p>
+      </section>
+
+      <section id="sheet" aria-live="polite"></section>
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="assets/js/site.js"></script>
+  <script>
+  (function(){
+    const $=id=>document.getElementById(id);
+    const KEEP=['shop','addr','phone'];
+    const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    const two=n=>n<20?ones[n]:tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:'');
+    const three=n=>(n>99?ones[Math.floor(n/100)]+' Hundred'+(n%100?' ':''):'')+(n%100?two(n%100):'');
+    function words(n){
+      n=Math.floor(n); if(n===0) return 'Zero';
+      const p=[[10000000,'Crore'],[100000,'Lakh'],[1000,'Thousand']]; let out=[];
+      for(const [v,name] of p){ if(n>=v){ out.push(three(Math.floor(n/v))+' '+name); n%=v; } }
+      if(n>0) out.push(three(n)); return out.join(' ');
+    }
+    const inr=n=>'Rs. '+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const dmy=s=>{ if(!s) return ''; const [y,m,d]=s.split('-'); return d+'-'+m+'-'+y; };
+    const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const v=id=>$(id).value.trim();
+
+    function copy(label){
+      const amt=parseFloat($('amt').value)||0, fee=parseFloat($('fee').value)||0, tot=amt+fee;
+      const rows=[['Customer',v('cust')],['Account / Consumer no.',v('acct')],['Bill type',$('type').value],['Bill period',v('period')],['Payment mode',$('mode').value]];
+      if(v('note')) rows.push(['Remarks',v('note')]);
+      const paise=Math.round((tot-Math.floor(tot))*100);
+      return `<article class="rcpt">
+        <header><div class="shop">${esc(v('shop')||'Your shop name')}</div>
+          <div class="meta">${esc(v('addr'))}${v('phone')?' | Ph: '+esc(v('phone')):''}</div></header>
+        <div class="title"><span>Payment Receipt / भुगतान रसीद</span><span class="copy">${label}</span></div>
+        <table>
+          <tr><td>Receipt no.</td><td>${esc(v('rno'))} &nbsp;&nbsp; Date: ${esc(dmy($('date').value))}</td></tr>
+          ${rows.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1]||'-')}</td></tr>`).join('')}
+          <tr><td>Bill amount</td><td>${inr(amt)}</td></tr>
+          <tr><td>Service charge</td><td>${inr(fee)}</td></tr>
+          <tr class="total"><td>Total received</td><td>${inr(tot)}</td></tr>
+        </table>
+        <p class="words">Rupees ${words(tot)}${paise?' and '+two(paise)+' Paise':''} only</p>
+        <div class="sign"><span>Customer sign</span><span>Authorised sign</span></div>
+        <p class="thanks">Thank you. Please keep this receipt for your record.</p>
+      </article>`;
+    }
+    function render(){ $('sheet').innerHTML=copy('CUSTOMER COPY')+'<div class="cut"><span>cut here</span></div>'+copy('OFFICE COPY'); }
+
+    // Load saved values
+    let n=1001; try{ n=parseInt(localStorage.getItem('cscdesk_rno'))||1001; KEEP.forEach(k=>{const s=localStorage.getItem('cscdesk_'+k); if(s) $(k).value=s;}); }catch(e){}
+    $('rno').value=n; $('date').value=new Date().toISOString().slice(0,10);
+    document.querySelectorAll('.form input,.form select').forEach(el=>el.addEventListener('input',()=>{
+      try{ if(KEEP.includes(el.id)) localStorage.setItem('cscdesk_'+el.id,el.value); }catch(e){}
+      render();
+    }));
+    $('print').addEventListener('click',()=>window.print());
+    window.addEventListener('afterprint',()=>{ const next=(parseInt($('rno').value)||n)+1; $('rno').value=next; try{localStorage.setItem('cscdesk_rno',next);}catch(e){} render(); });
+    $('clear').addEventListener('click',()=>{ ['cust','acct','period','amt','note'].forEach(k=>$(k).value=''); $('fee').value='0'; render(); });
+    $('demo').addEventListener('click',()=>{
+      const d={shop:'Demo CSC Centre',addr:'Main Bazar, Rohtak, Haryana',phone:'9876543210',cust:'Ramesh Kumar',acct:'1234567890',period:'Oct 2026',amt:'1850.50',fee:'20',note:'Demo receipt for practice'};
+      Object.keys(d).forEach(k=>$(k).value=d[k]); render();
+    });
+    render();
+  })();
+  </script>
+</body>
+</html>

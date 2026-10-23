@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" role="img" aria-label="Shop Ledger app preview">
+<rect width="360" height="260" rx="16" fill="#ffffff"/>
+<rect width="360" height="44" rx="16" fill="#0b5c3b"/><rect y="28" width="360" height="16" fill="#0b5c3b"/>
+<text x="16" y="29" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#fff">Shop Ledger</text>
+<rect x="16" y="58" width="102" height="52" rx="8" fill="#e3f3ea"/><text x="26" y="78" font-family="Arial" font-size="11" fill="#5d6b7a">Today Sale</text><text x="26" y="99" font-family="Arial" font-size="17" font-weight="700" fill="#073d27">&#8377; 4,850</text>
+<rect x="129" y="58" width="102" height="52" rx="8" fill="#fdeceb"/><text x="139" y="78" font-family="Arial" font-size="11" fill="#5d6b7a">Udhaar</text><text x="139" y="99" font-family="Arial" font-size="17" font-weight="700" fill="#b3261e">&#8377; 1,260</text>
+<rect x="242" y="58" width="102" height="52" rx="8" fill="#e8f1fb"/><text x="252" y="78" font-family="Arial" font-size="11" fill="#5d6b7a">Profit</text><text x="252" y="99" font-family="Arial" font-size="17" font-weight="700" fill="#1a4f8b">&#8377; 1,120</text>
+<g font-family="Arial,sans-serif" font-size="12" fill="#1b2430">
+<line x1="16" y1="130" x2="344" y2="130" stroke="#d5dce4"/><text x="16" y="150">Ramesh Kumar</text><text x="344" y="150" text-anchor="end" fill="#b3261e">- &#8377; 450</text>
+<line x1="16" y1="162" x2="344" y2="162" stroke="#d5dce4"/><text x="16" y="182">Sunita Devi</text><text x="344" y="182" text-anchor="end" fill="#0b5c3b">+ &#8377; 800</text>
+<line x1="16" y1="194" x2="344" y2="194" stroke="#d5dce4"/><text x="16" y="214">Mobile Recharge</text><text x="344" y="214" text-anchor="end" fill="#0b5c3b">+ &#8377; 299</text>
+</g>
+<rect x="244" y="224" width="100" height="26" rx="13" fill="#0b5c3b"/><text x="294" y="241" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">+ New Entry</text>
+</svg>

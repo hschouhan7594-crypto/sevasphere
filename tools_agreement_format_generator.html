@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent & Service Agreement Generator | SevaSphere</title>
+<meta name="description" content="Generate clean, legal rent agreements and service contracts ready for stamp paper printing.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/csc-system.css">
+<style>
+
+
+
+
+
+
+
+
+        /* Workspace Grid */
+        .workspace {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 950px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .form-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .form-panel h3 {
+            font-size: 15px;
+            color: #0b6e4f;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 6px;
+            margin-top: 15px;
+        }
+
+        .form-panel h3:first-of-type {
+            margin-top: 0;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-row .input-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 4px;
+        }
+
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 60px;
+        }
+
+        .btn-print {
+            background-color: #0b6e4f;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .btn-print:hover {
+            background-color: #07513a;
+        }
+
+        /* Preview Panel (A4 Document Layout) */
+        .preview-panel {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .agreement-sheet {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 20mm;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            color: #222;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .doc-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #0b6e4f;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #0b6e4f;
+            padding-bottom: 8px;
+        }
+
+        .doc-section {
+            margin-bottom: 18px;
+            text-align: justify;
+        }
+
+        .doc-section strong {
+            color: #000;
+        }
+
+        .signature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 50px;
+            padding-top: 20px;
+        }
+
+        .sig-box {
+            text-align: center;
+            border-top: 1px solid #333;
+            padding-top: 8px;
+            font-weight: bold;
+        }
+
+        /* Print Media Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .agreement-sheet, .agreement-sheet * {
+                visibility: visible;
+            }
+            .agreement-sheet {
+                position: absolute;
+                left: 0;
+                top: 0;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 15mm;
+                width: 210mm;
+                height: 297mm;
+            }
+            .form-panel, .header, .back-link, .btn-print {
+                display: none;
+            }
+        }
+    </style>
+<style>
+/* SevaSphere compatibility skin: portal chrome adapts to light/dark, tool cards stay paper-white */
+@page{size:A4;margin:0}
+@media print{body{min-height:0}.sheet-a4{padding:4mm!important;gap:2mm 3mm!important}}
+</style>
+<style id="pageStyle"></style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="site-header"></header>
+<main id="main">
+
+    <div class="container">
+        <div class="page-head no-print"><div class="crumbs"><a href="index.html">Home</a> / Documents</div><h1>Rent & Service Agreement Generator</h1><p>Generate clean, legal rent agreements and service contracts ready for stamp paper printing.</p></div>
+
+        <div class="workspace">
+            <!-- Left Form Panel -->
+            <div class="form-panel">
+                <h3>1. Agreement Type & Date</h3>
+                <div class="input-group">
+                    <label>Agreement Type</label>
+                    <select id="agreementType" onchange="updateAgreement()">
+                        <option value="rent">House / Commercial Rent Agreement</option>
+                        <option value="service">Service / Work Contract</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Agreement Date</label>
+                    <input type="date" id="docDate" onchange="updateAgreement()">
+                </div>
+
+                <h3>2. First Party (Owner / Provider)</h3>
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="p1Name" value="Suresh Chand" oninput="updateAgreement()">
+                </div>
+                <div class="input-group">
+                    <label>Father's / Husband's Name</label>
+                    <input type="text" id="p1Father" value="Shri Ram Chand" oninput="updateAgreement()">
+                </div>
+                <div class="input-group">
+                    <label>Full Address</label>
+                    <input type="text" id="p1Address" value="House No. 124, Model Town, Rohtak, Haryana" oninput="updateAgreement()">
+                </div>
+
+                <h3>3. Second Party (Tenant / Client)</h3>
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="p2Name" value="Vikas Verma" oninput="updateAgreement()">
+                </div>
+                <div class="input-group">
+                    <label>Father's / Husband's Name</label>
+                    <input type="text" id="p2Father" value="Shri Hari Singh" oninput="updateAgreement()">
+                </div>
+                <div class="input-group">
+                    <label>Full Address</label>
+                    <input type="text" id="p2Address" value="VPO Sampla, Rohtak, Haryana" oninput="updateAgreement()">
+                </div>
+
+                <h3>4. Property / Contract Details</h3>
+                <div class="input-group">
+                    <label>Rented Property / Premises Address</label>
+                    <input type="text" id="propAddress" value="Shop No. 5, Main Market, Rohtak, Haryana" oninput="updateAgreement()">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Monthly Rent / Amount (₹)</label>
+                        <input type="number" id="monthlyRent" value="8500" oninput="updateAgreement()">
+                    </div>
+                    <div class="input-group">
+                        <label>Security Deposit (₹)</label>
+                        <input type="number" id="secDeposit" value="17000" oninput="updateAgreement()">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Tenure / Duration (Months)</label>
+                    <input type="number" id="tenureMonths" value="11" oninput="updateAgreement()">
+                </div>
+
+                <h3>5. Tenant photo and ID proofs</h3>
+                <div class="input-group"><label>Tenant photo</label><input type="file" accept="image/*" onchange="loadAnn(event,'tenantPhoto')"></div>
+<div class="input-group"><label>ID proof 1 - type</label><select id="idType1" onchange="updateAnnexure()"><option>Aadhaar Card</option><option>PAN Card</option><option>Voter ID</option><option>Driving Licence</option><option>Passport</option><option>Ration Card</option></select></div>
+                <div class="input-group"><label>ID proof 1 - number</label><input type="text" id="idNo1" oninput="updateAnnexure()"></div>
+                <div class="input-group"><label>ID proof 1 - scan / photo</label><input type="file" accept="image/*" onchange="loadAnn(event,'idImg1')"></div>
+<div class="input-group"><label>ID proof 2 - type</label><select id="idType2" onchange="updateAnnexure()"><option>PAN Card</option><option>Aadhaar Card</option><option>PAN Card</option><option>Voter ID</option><option>Driving Licence</option><option>Passport</option><option>Ration Card</option></select></div>
+                <div class="input-group"><label>ID proof 2 - number</label><input type="text" id="idNo2" oninput="updateAnnexure()"></div>
+                <div class="input-group"><label>ID proof 2 - scan / photo</label><input type="file" accept="image/*" onchange="loadAnn(event,'idImg2')"></div>
+
+                <div class="input-group"><label><input type="checkbox" id="showAnn" checked onchange="updateAnnexure()" style="width:auto"> Print annexure page (photo + ID proofs)</label></div>
+
+                <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Print / Save Agreement as PDF</button>
+            </div>
+
+            <!-- Right Preview Panel -->
+            <div class="preview-panel">
+                <div id="agreementSheet" class="agreement-sheet">
+                    <div class="doc-title" id="prevDocTitle">RENT AGREEMENT</div>
+
+                    <div class="doc-section">
+                        This Rent Agreement is made and executed on this <strong><span id="prevDocDate">18th day of October, 2026</span></strong> at Rohtak, Haryana, by and between:
+                    </div>
+
+                    <div class="doc-section">
+                        <strong>FIRST PARTY (Landlord/Owner):</strong><br>
+                        <strong><span id="prevP1Name">Suresh Chand</span></strong>, S/o <strong><span id="prevP1Father">Shri Ram Chand</span></strong>, Resident of <span id="prevP1Address">House No. 124, Model Town, Rohtak, Haryana</span>.
+                    </div>
+
+                    <div class="doc-section">
+                        <strong>AND</strong>
+                    </div>
+
+                    <div class="doc-section">
+                        <strong>SECOND PARTY (Tenant):</strong><br>
+                        <strong><span id="prevP2Name">Vikas Verma</span></strong>, S/o <strong><span id="prevP2Father">Shri Hari Singh</span></strong>, Resident of <span id="prevP2Address">VPO Sampla, Rohtak, Haryana</span>.
+                    </div>
+
+                    <div class="doc-section">
+                        WHEREAS the First Party is the lawful owner of the property situated at <strong><span id="prevPropAddress">Shop No. 5, Main Market, Rohtak, Haryana</span></strong> and has agreed to let out the said premises to the Second Party on the following terms and conditions:
+                    </div>
+
+                    <div class="doc-section">
+                        <strong>TERMS AND CONDITIONS:</strong>
+                        <ol style="margin-left: 20px; margin-top: 8px;">
+                            <li>That the tenancy duration shall be for a fixed period of <strong><span id="prevTenure">11</span> months</strong> starting from the execution date.</li>
+                            <li>That the Second Party shall pay a monthly rent of <strong>₹ <span id="prevRent">8,500</span>/-</strong> on or before the 7th day of each English calendar month.</li>
+                            <li>That the Second Party has deposited an interest-free security amount of <strong>₹ <span id="prevDeposit">17,000</span>/-</strong> with the First Party, refundable at the time of vacating the premises.</li>
+                            <li>That electricity and water charges shall be paid extra by the Second Party as per actual meter readings.</li>
+                            <li>That the Second Party shall not make any structural alterations to the premises without written consent from the First Party.</li>
+                        </ol>
+                    </div>
+
+                    <div class="doc-section" style="margin-top: 30px;">
+                        IN WITNESS WHEREOF, both parties have signed this Agreement on the date and year first mentioned above in the presence of the following witnesses.
+                    </div>
+
+                    <div class="signature-grid">
+                        <div class="sig-box">
+                            Signature of First Party<br>
+                            (<span id="prevSigP1">Suresh Chand</span>)
+                        </div>
+                        <div class="sig-box">
+                            Signature of Second Party<br>
+                            (<span id="prevSigP2">Vikas Verma</span>)
+                        </div>
+                    </div>
+                    <div id="annexure" style="page-break-before:always;break-before:page;margin-top:30px">
+                        <div class="doc-title" style="font-size:16px">ANNEXURE: TENANT PHOTO AND ID PROOF</div>
+                        <div style="display:flex;gap:14px;align-items:flex-start;margin:12px 0">
+                            <div style="text-align:center;font-size:12px"><img id="tenantPhoto" alt="" style="width:35mm;height:45mm;object-fit:cover;border:1px solid #888;display:none"><div id="tenantCap"></div></div>
+                            <div style="font-size:12px"><b>Tenant:</b> <span id="annName"></span></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+                            <div><b id="idCap1"></b><div style="border:1px dashed #888;min-height:55mm;display:flex;align-items:center;justify-content:center"><img id="idImg1" alt="" style="max-width:100%;max-height:80mm;display:none"></div></div>
+                            <div><b id="idCap2"></b><div style="border:1px dashed #888;min-height:55mm;display:flex;align-items:center;justify-content:center"><img id="idImg2" alt="" style="max-width:100%;max-height:80mm;display:none"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+<footer id="site-footer"></footer>
+<script>
+        // Set default date to today
+        document.getElementById('docDate').valueAsDate = new Date();
+
+        function loadAnn(e,id){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{const i=document.getElementById(id);i.src=x.target.result;i.style.display='block';};r.readAsDataURL(f);}
+        function updateAnnexure(){
+            const g=id=>document.getElementById(id);
+            g('annexure').style.display=g('showAnn').checked?'block':'none';
+            g('annName').innerText=g('p2Name').value;
+            [1,2].forEach(n=>{g('idCap'+n).innerText='ID proof '+n+': '+g('idType'+n).value+(g('idNo'+n).value?' - '+g('idNo'+n).value:'');});
+        }
+        function updateAgreement() {
+            const type = document.getElementById('agreementType').value;
+            document.getElementById('prevDocTitle').innerText = type === 'rent' ? 'RENT AGREEMENT' : 'SERVICE AGREEMENT';
+
+            const rawDate = document.getElementById('docDate').value;
+            if (rawDate) {
+                const dateObj = new Date(rawDate);
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('prevDocDate').innerText = dateObj.toLocaleDateString('en-US', options);
+            }
+
+            const p1Name = document.getElementById('p1Name').value;
+            const p2Name = document.getElementById('p2Name').value;
+
+            document.getElementById('prevP1Name').innerText = p1Name;
+            document.getElementById('prevP1Father').innerText = document.getElementById('p1Father').value;
+            document.getElementById('prevP1Address').innerText = document.getElementById('p1Address').value;
+
+            document.getElementById('prevP2Name').innerText = p2Name;
+            document.getElementById('prevP2Father').innerText = document.getElementById('p2Father').value;
+            document.getElementById('prevP2Address').innerText = document.getElementById('p2Address').value;
+
+            document.getElementById('prevPropAddress').innerText = document.getElementById('propAddress').value;
+            
+            const rent = parseFloat(document.getElementById('monthlyRent').value) || 0;
+            const deposit = parseFloat(document.getElementById('secDeposit').value) || 0;
+
+            document.getElementById('prevRent').innerText = rent.toLocaleString('en-IN');
+            document.getElementById('prevDeposit').innerText = deposit.toLocaleString('en-IN');
+            document.getElementById('prevTenure').innerText = document.getElementById('tenureMonths').value;
+
+            document.getElementById('prevSigP1').innerText = p1Name;
+            document.getElementById('prevSigP2').innerText = p2Name;
+            updateAnnexure();
+        }
+
+        // Initialize preview
+        updateAgreement();
+    </script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

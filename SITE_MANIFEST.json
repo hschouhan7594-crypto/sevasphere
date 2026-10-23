@@ -1,0 +1,24 @@
+{
+  "project": "SevaSphere",
+  "brandVersion": "1.0",
+  "foundationVersion": "1.1",
+  "visualIdentity": {
+    "primary": "#0b5c49",
+    "accent": "#75e0b0",
+    "surface": "#ffffff",
+    "style": "premium emerald green and white"
+  },
+  "sharedStyles": [
+    "assets/css/portal.css",
+    "assets/css/csc-system.css"
+  ],
+  "homeStyles": [
+    "assets/css/home.css"
+  ],
+  "sharedLogic": "assets/js/site.js",
+  "starterTemplate": "TEMPLATE_STARTER.html",
+  "guide": "GLOBAL_SYSTEM_GUIDE.md",
+  "targetScale": "100+ static tool pages using shared styles and reusable templates",
+  "deploymentStatus": "local review demo; not deployed",
+  "compatibilityPolicy": "Preserve existing tool logic while migrating page templates in audited batches."
+}

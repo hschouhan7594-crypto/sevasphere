@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Resume and Biodata Generator | SevaSphere</title>
+<meta name="description" content="Free bilingual resume and biodata maker for fresher to experienced. Add photo, pick a layout, print on A4 or save as PDF.">
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#1b2430;--mu:#5d6b7a;--bd:#d5dce4;--pr:#0b5c3b;--pr2:#e3f3ea;--er:#b3261e;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151b;--card:#18202a;--tx:#e8edf2;--mu:#98a6b4;--bd:#2c3846;--pr:#4cc38a;--pr2:#16322a;--er:#ff8a80;--on:#06140e}}
+:root[data-theme="dark"]{--bg:#10151b;--card:#18202a;--tx:#e8edf2;--mu:#98a6b4;--bd:#2c3846;--pr:#4cc38a;--pr2:#16322a;--er:#ff8a80;--on:#06140e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",sans-serif}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+h2.t{font-size:1rem;margin:0 0 12px;color:var(--pr)}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label{display:block;font-size:.8rem;color:var(--mu);margin-bottom:3px;font-weight:600}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+input.bad,select.bad,textarea.bad{border-color:var(--er)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pr);border-color:transparent}
+.full{grid-column:1/-1}.err{color:var(--er);font-size:.74rem;min-height:1em}
+.hint{font-size:.78rem;color:var(--mu);margin:-4px 0 10px}
+.btn{background:var(--pr);color:var(--on);border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:.92rem}
+.btn.s{background:var(--card);color:var(--pr);border:1px solid var(--pr)}
+.btn.x{padding:6px 10px;background:transparent;color:var(--er);border:1px solid var(--er)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chips label{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--bd);border-radius:16px;padding:4px 10px;margin:0;font-weight:400;color:var(--tx);cursor:pointer;font-size:.82rem}
+.chips input{width:auto;margin:0}
+.chips label:has(input:checked){background:var(--pr2);border-color:var(--pr)}
+.er,.xr{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px;padding:10px;border:1px dashed var(--bd);border-radius:8px;align-items:start}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;color:var(--tx);font-weight:400}.chk input{width:auto;margin-top:4px}
+#out{display:none}.hintbar{font-size:.8rem;color:var(--mu);margin:0 0 8px}
+.paper{--ac:#0b5c3b;background:#fff;color:#111;border:1px solid var(--bd);border-radius:6px;padding:26px;font:14px/1.55 "Segoe UI","Noto Sans Devanagari",Arial,sans-serif;overflow-x:auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.paper:focus{outline:2px dashed var(--ac)}
+.paper h2.nm{margin:0;font-size:1.7em;color:var(--ac)}.ct{font-size:.92em;color:#333;margin:2px 0 6px}
+.hd{display:flex;justify-content:space-between;gap:14px;border-bottom:3px solid var(--ac);padding-bottom:8px;margin-bottom:6px}
+.photo{width:3.2cm;height:4cm;border:1px solid #666;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:#555;overflow:hidden;flex:none;padding:3px;margin-bottom:8px}.photo img{width:100%;height:100%;object-fit:cover}
+.sc{margin-top:10px}.sc h4{margin:0 0 4px;font-size:1em;text-transform:uppercase;letter-spacing:.04em;color:var(--ac);border-bottom:1px solid var(--ac);padding-bottom:2px}
+.paper p{margin:3px 0}.paper ul{margin:3px 0;padding-left:20px}.cl{columns:2}.paper li{margin:2px 0}
+.paper table{border-collapse:collapse;width:100%}.et th,.et td{border:1px solid #888;padding:3px 6px;font-size:.9em;text-align:left}.et th{background:var(--ac);color:#fff}
+.pt td{padding:2px 6px 2px 0;vertical-align:top}.pt td:first-child{font-weight:600;width:42%}
+.ent{margin:6px 0}.dt{float:right;font-size:.88em;color:#444}
+.sig{display:flex;justify-content:space-between;margin-top:30px;gap:12px}
+.rs{display:grid;grid-template-columns:33% 1fr;gap:16px}.rs aside{background:linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,.9)),var(--ac);padding:12px;border-radius:6px}.rs aside .cl{columns:1}
+.ls-n ul{list-style:decimal}.ls-d ul{list-style-type:"–  "}.ls-t ul{list-style-type:"✔  "}.ls-a ul{list-style-type:"➤  "}.ls-c ul{padding:0;list-style:none;columns:1}.ls-c li{display:inline}.ls-c li:not(:last-child)::after{content:", "}
+.rs.rt{grid-template-columns:1fr 33%}.rs2{display:grid;grid-template-columns:1.7fr 1fr;gap:16px}.rs2 aside{background:linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,.9)),var(--ac);padding:12px;border-radius:6px}.rs2 aside .cl,.g2 .cl{columns:1}.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.bn{background:var(--ac);color:#fff;padding:16px;border-radius:8px;display:flex;gap:16px;align-items:center;margin-bottom:8px}.bn h2.nm,.bn .ct{color:#fff}.bn .photo{border-radius:50%;width:3cm;height:3cm;margin:0;border:3px solid #fff;color:#fff}
+.tm .ent{position:relative;padding-left:16px;border-left:2px solid var(--ac);margin-left:6px;padding-bottom:6px}.tm .ent::before{content:"";position:absolute;left:-7px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--ac)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#222;color:#fff;padding:10px 16px;border-radius:8px;z-index:99;max-width:90%;display:none;font-size:.9rem;text-align:center}
+@page{size:A4;margin:12mm}
+@media print{#toast{display:none!important}body{background:#fff}header,#form,.noprint{display:none!important}main{padding:0}.paper{border:0;padding:0;outline:none}}
+</style>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/csc-system.css">
+<style>
+/* SevaSphere compatibility skin: maps this tool's old variables onto the shared portal tokens */
+:root:root{--card:var(--surface);--tx:var(--text);--mu:var(--muted);--bd:var(--line);--pr:var(--brand);--pr2:var(--soft);--on:var(--on-brand)}
+main{max-width:900px}
+.tool-bar{display:flex;gap:10px 28px;flex-wrap:wrap;align-items:center;margin:4px 0 16px}
+.lg button,.md button{background:var(--surface);color:var(--brand-strong);border:1px solid var(--line);padding:7px 16px;margin:0 4px 0 0;border-radius:99px;cursor:pointer;font:inherit;font-size:.88rem;font-weight:600}
+.lg button:hover,.md button:hover{border-color:var(--brand)}
+.lg button.a,.md button.a{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+.card{box-shadow:var(--shadow)}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="site-header"></header>
+<header class="page-head noprint"><div class="crumbs"><a href="index.html">Home</a> / Documents</div><h1 data-i="Resume / Biodata Generator|रिज्यूमे / बायोडाटा जनरेटर"></h1><p data-i="Fresher • 10th • 12th • Diploma • Graduate • Degree • Experienced|फ्रेशर • 10वीं • 12वीं • डिप्लोमा • स्नातक • डिग्री • अनुभवी"></p></header>
+<div class="tool-bar noprint">
+<div class="lg"><button data-l="en">English</button><button data-l="hi">हिंदी</button><button data-l="both" class="a">English + हिंदी</button></div></div>
+<main id="main">
+<div id="form"><div id="f"></div></div>
+<div id="out">
+<div class="card noprint"><div class="row"><button class="btn" id="pdf" data-i="📄 Save as PDF|📄 PDF सेव करें"></button><button class="btn s" onclick="doPrint()" data-i="🖨 Print|🖨 प्रिंट"></button>
+<select id="lay" style="width:auto"></select><select id="ac" style="width:auto"></select><select id="ls" style="width:auto"></select><select id="ff" style="width:auto"></select>
+<select id="fs" style="width:auto"><option value="12" data-i="Small (12)|छोटा (12)"></option><option value="14" selected data-i="Normal (14)|सामान्य (14)"></option><option value="16" data-i="Large (16)|बड़ा (16)"></option></select></div>
+<div class="row" style="margin-top:8px"><button class="btn s" id="addi" onmousedown="event.preventDefault()" data-i="➕ Add item|➕ पंक्ति जोड़ें"></button><button class="btn s" id="deli" onmousedown="event.preventDefault()" data-i="➖ Delete item|➖ पंक्ति हटाएँ"></button><button class="btn s" id="back" data-i="← Edit details|← विवरण बदलें"></button></div>
+<div class="hintbar" id="fnh" style="margin-top:8px"></div></div>
+<p class="noprint hintbar" data-i="✏ Click on any text in the resume to edit it before printing.|✏ प्रिंट से पहले रिज्यूमे में किसी भी लिखावट पर क्लिक करके बदलें।"></p>
+<div class="paper" id="paper" contenteditable="true" spellcheck="false"></div></div>
+</main>
+<footer id="site-footer"></footer>
+<div id="toast"></div>
+<script>
+var lang="both",$=function(i){return document.getElementById(i)},PHOTO="",D=null,edited=false,pl="classic";
+function L(s){var p=s.split("|");if(p.length<2)return s;return lang=="en"?p[0]:lang=="hi"?p[1]:p[0]+" / "+p[1]}
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function O(s,sel){return s.split("~").map(function(o){return'<option value="'+o+'"'+(o.split("|")[0]==sel?" selected":"")+' data-i="'+o+'"></option>'}).join("")}
+function chips(id,s){return'<div class="chips" id="'+id+'">'+s.split("~").map(function(o){return'<label><input type="checkbox" value="'+o+'"><span data-i="'+o+'"></span></label>'}).join("")+"</div>"}
+function fld(id,lb,ty,rq,o,full){var h;
+ if(ty=="sel")h='<select id="'+id+'">'+O(o,id=="dist"?"Rohtak":"")+"</select>";
+ else if(ty=="ta")h='<textarea id="'+id+'" rows="3" data-req="'+rq+'"'+(o?' data-p="'+o+'"':"")+"></textarea>";
+ else h='<input id="'+id+'" type="'+ty+'" data-req="'+rq+'"'+(o?' data-p="'+o+'"':"")+">";
+ return'<div'+(full||ty=="ta"?' class="full"':"")+'><label data-i="'+lb+'"></label>'+h+'<div class="err" id="e_'+id+'"></div></div>'}
+var TY={fresher:"Fresher|फ्रेशर",p10:"10th Pass|10वीं पास",p12:"12th Pass|12वीं पास",dip:"Diploma Holder|डिप्लोमा धारक",grad:"Graduate (BA / B.Sc / B.Com)|स्नातक (बीए / बीएससी / बीकॉम)",degree:"Degree Holder (B.Tech / BCA / Professional)|डिग्री धारक (बी.टेक / बीसीए / व्यावसायिक)",pg:"Post Graduate|स्नातकोत्तर",exp:"Experienced Professional|अनुभवी पेशेवर"};
+var M10="Matric (10th)|मैट्रिक (10वीं)",S12="Senior Secondary (12th)|सीनियर सेकेंडरी (12वीं)";
+var EDU={fresher:[M10,S12],p10:[M10],p12:[M10,S12],dip:[M10,"Diploma|डिप्लोमा"],grad:[M10,S12,"Graduation|स्नातक"],degree:[M10,S12,"B.Tech / BCA / Degree|बी.टेक / बीसीए / डिग्री"],pg:[M10,S12,"Graduation|स्नातक","Post Graduation|स्नातकोत्तर"],exp:[M10,S12,"Graduation|स्नातक"]};
+var OBJ={
+fresher:"A sincere and hardworking fresher seeking an opportunity to start my career in a reputed organization where I can learn, contribute and grow.|एक ईमानदार व परिश्रमी फ्रेशर, जो किसी प्रतिष्ठित संस्था में कॅरियर शुरू कर सीखने, योगदान देने और आगे बढ़ने का अवसर चाहता/चाहती है।~I humbly seek a position where I can use my education and skills for the growth of the organization and my own development.|मैं विनम्रतापूर्वक ऐसा पद चाहता/चाहती हूँ जहाँ अपनी शिक्षा व कौशल से संस्था के विकास और अपने विकास में योगदान दे सकूँ।",
+p10:"A 10th pass, hardworking and disciplined candidate seeking a job where I can work sincerely and learn new skills.|दसवीं पास, परिश्रमी व अनुशासित अभ्यर्थी, जो ऐसे कार्य की तलाश में है जहाँ ईमानदारी से काम कर नए कौशल सीख सके।~I humbly request an opportunity to serve in a suitable post and prove my dedication and honesty.|मेरा विनम्र अनुरोध है कि मुझे किसी उपयुक्त पद पर सेवा का अवसर दिया जाए ताकि मैं अपनी निष्ठा व ईमानदारी सिद्ध कर सकूँ।",
+p12:"A 12th pass, sincere candidate looking for an entry-level position to apply my knowledge and develop new skills.|बारहवीं पास, निष्ठावान अभ्यर्थी, जो प्रारंभिक स्तर के पद पर अपना ज्ञान लगाकर नए कौशल विकसित करना चाहता/चाहती है।~I humbly seek a job in a reputed organization where I can learn, work in a team and grow steadily.|मैं किसी प्रतिष्ठित संस्था में ऐसी नौकरी चाहता/चाहती हूँ जहाँ सीख सकूँ, टीम में कार्य कर सकूँ और निरंतर आगे बढ़ सकूँ।",
+dip:"A technically trained Diploma holder seeking a position where I can apply my practical skills and learn on the job.|तकनीकी रूप से प्रशिक्षित डिप्लोमा धारक, जो ऐसे पद की तलाश में है जहाँ अपने व्यावहारिक कौशल का प्रयोग कर सके और सीख सके।~I respectfully seek an opportunity in the technical field of a reputed company to contribute with dedication and skill.|मैं किसी प्रतिष्ठित कंपनी के तकनीकी क्षेत्र में समर्पण व कौशल के साथ योगदान देने का अवसर चाहता/चाहती हूँ।",
+grad:"A graduate with a good academic record and communication skills seeking a challenging role to grow along with the organization.|अच्छे शैक्षणिक रिकॉर्ड व संवाद कौशल वाला स्नातक, जो संस्था के साथ आगे बढ़ने हेतु चुनौतीपूर्ण भूमिका चाहता/चाहती है।~I humbly request an opportunity to utilise my education and abilities in a position that offers learning and growth.|मेरा विनम्र निवेदन है कि मुझे ऐसे पद पर अवसर मिले जहाँ मैं अपनी शिक्षा व क्षमताओं का उपयोग कर सीख व उन्नति पा सकूँ।",
+degree:"A qualified professional degree holder seeking a position to apply my technical knowledge, skills and innovation.|योग्य व्यावसायिक डिग्री धारक, जो अपने तकनीकी ज्ञान, कौशल व नवाचार के उपयोग हेतु पद चाहता/चाहती है।~I humbly seek an opportunity in a reputed organization to put my degree and skills to productive use.|मैं किसी प्रतिष्ठित संस्था में अपनी डिग्री व कौशल का उत्पादक उपयोग करने का अवसर विनम्रतापूर्वक चाहता/चाहती हूँ।",
+pg:"A post graduate with strong subject knowledge seeking a responsible position to contribute and grow professionally.|सशक्त विषय-ज्ञान वाला स्नातकोत्तर, जो जिम्मेदार पद पर योगदान देकर व्यावसायिक उन्नति चाहता/चाहती है।~I respectfully seek a role where my higher education and dedication can add value to the organization.|मैं ऐसी भूमिका चाहता/चाहती हूँ जहाँ मेरी उच्च शिक्षा व समर्पण संस्था के लिए उपयोगी सिद्ध हो।",
+exp:"An experienced and result-oriented professional seeking a senior opportunity to apply my experience for the organization's growth.|अनुभवी व परिणाम-उन्मुख पेशेवर, जो संस्था की प्रगति हेतु अपने अनुभव का उपयोग करने वाला उच्च अवसर चाहता/चाहती है।~I humbly seek a better position where my experience, discipline and loyalty can be fully utilised.|मैं बेहतर पद चाहता/चाहती हूँ जहाँ मेरे अनुभव, अनुशासन व निष्ठा का पूर्ण उपयोग हो सके।"};
+var CL="I request you to kindly give me an opportunity to serve your organization. I assure you of my honesty and hard work.|मेरा अनुरोध है कि मुझे आपकी संस्था में सेवा का अवसर प्रदान करें। मैं ईमानदारी व कड़ी मेहनत का आश्वासन देता/देती हूँ।~I hereby declare that the above information is true to the best of my knowledge. I humbly hope for your kind consideration.|मैं घोषणा करता/करती हूँ कि उपरोक्त जानकारी मेरी जानकारी में सत्य है। मुझे आपके कृपापूर्ण विचार की विनम्र आशा है।~I shall be grateful if you grant me an interview, and I promise to perform my duties sincerely.|यदि मुझे साक्षात्कार का अवसर मिले तो मैं आभारी रहूँगा/रहूँगी और कर्तव्यों का निष्ठा से पालन करूँगा/करूँगी।~Thanking you for your valuable time. I look forward to a favourable reply.|आपके बहुमूल्य समय के लिए धन्यवाद। मुझे अनुकूल उत्तर की आशा है।";
+var DIST="Ambala|अंबाला~Bhiwani|भिवानी~Charkhi Dadri|चरखी दादरी~Faridabad|फरीदाबाद~Fatehabad|फतेहाबाद~Gurugram|गुरुग्राम~Hisar|हिसार~Jhajjar|झज्जर~Jind|जींद~Kaithal|कैथल~Karnal|करनाल~Kurukshetra|कुरुक्षेत्र~Mahendragarh|महेंद्रगढ़~Nuh|नूंह~Palwal|पलवल~Panchkula|पंचकूला~Panipat|पानीपत~Rewari|रेवाड़ी~Rohtak|रोहतक~Sirsa|सिरसा~Sonipat|सोनीपत~Yamunanagar|यमुनानगर";
+var SK="Basic Computer|बेसिक कंप्यूटर~MS Office (Word / Excel)|एमएस ऑफिस (वर्ड / एक्सेल)~Hindi Typing|हिंदी टाइपिंग~English Typing|अंग्रेज़ी टाइपिंग~Internet & Email|इंटरनेट व ईमेल~Data Entry|डाटा एंट्री~Tally / Accounting|टैली / अकाउंटिंग~Communication|संवाद कौशल~Teamwork|टीम वर्क~Leadership|नेतृत्व~Time Management|समय प्रबंधन~Customer Service|ग्राहक सेवा~Driving (2-wheeler / LMV)|ड्राइविंग (दुपहिया / कार)~Photoshop / Designing|फोटोशॉप / डिज़ाइनिंग~Programming Basics|प्रोग्रामिंग की बुनियादी जानकारी~AutoCAD|ऑटोकैड~Electrical / ITI Trade Work|इलेक्ट्रिकल / आईटीआई ट्रेड कार्य~Sewing / Tailoring|सिलाई / टेलरिंग~Social Media|सोशल मीडिया~Sales & Marketing|सेल्स व मार्केटिंग~Mobile Repairing|मोबाइल रिपेयरिंग~Welding / Plumbing|वेल्डिंग / प्लंबिंग~Tractor / Farm Machinery|ट्रैक्टर / कृषि मशीनरी~Teaching / Tutoring|अध्यापन / ट्यूशन~Reception / Front Office|रिसेप्शन / फ्रंट ऑफिस~Stock / Inventory|स्टॉक / इन्वेंटरी~Cash Handling|कैश हैंडलिंग~Field Survey|फील्ड सर्वे~Basic English Speaking|बेसिक अंग्रेज़ी बोलना~CCC / O-Level|सीसीसी / ओ-लेवल~Computer Hardware|कंप्यूटर हार्डवेयर";
+var LG="Hindi|हिंदी~English|अंग्रेज़ी~Punjabi|पंजाबी~Haryanvi|हरियाणवी~Urdu|उर्दू~Sanskrit|संस्कृत";
+var HB="Reading Books|पुस्तकें पढ़ना~Cricket|क्रिकेट~Kabaddi|कबड्डी~Wrestling|कुश्ती~Volleyball|वॉलीबॉल~Football|फुटबॉल~Badminton|बैडमिंटन~Running / Athletics|दौड़ / एथलेटिक्स~Yoga & Meditation|योग व ध्यान~Gym / Fitness|जिम / फिटनेस~Swimming|तैराकी~Cycling|साइकिलिंग~Chess|शतरंज~Drawing / Painting|चित्रकारी~Singing|गायन~Dancing|नृत्य~Listening to Music|संगीत सुनना~Cooking|खाना बनाना~Gardening|बागवानी~Farming / Agriculture|खेती-बाड़ी~Travelling|यात्रा करना~Photography|फोटोग्राफी~Writing / Poetry|लेखन / कविता~Social Service|समाज सेवा~Blood Donation|रक्तदान~NCC / NSS / Scouts|एनसीसी / एनएसएस / स्काउट~Public Speaking|भाषण देना~Computer Learning|कंप्यूटर सीखना~Video Editing|वीडियो एडिटिंग~Mobile Gaming (Educational)|मोबाइल गेम~Watching News / Current Affairs|समाचार / करंट अफेयर्स~Handicrafts|हस्तशिल्प~Bird Watching|पक्षी निहारना";
+var LAY="Classic|क्लासिक~Left Sidebar|बायाँ साइडबार~Right Sidebar|दायाँ साइडबार~Modern Banner|आधुनिक बैनर~Timeline|टाइमलाइन~Compact 2-Column|कॉम्पैक्ट 2-कॉलम",LK=["classic","left","right","band","time","comp"],
+ACC="Green|हरा~Blue|नीला~Maroon|मरून~Black|काला~Teal|टील~Purple|बैंगनी~Orange|नारंगी",ACH=["#0b5c3b","#1a4f9c","#8a1c2b","#222222","#007c89","#5b2a86","#c2570c"],
+LS="Bullet •|बुलेट •~Numbered 1 2 3|क्रमांकित 1 2 3~Dash –|डैश –~Tick ✔|सही ✔~Arrow ➤|तीर ➤~Inline (comma)|इनलाइन (अल्पविराम)",LSK=["b","n","d","t","a","c"],
+FF="Modern Sans|आधुनिक सैन्स~Classic Serif|क्लासिक सेरिफ~Clean Rounded|साफ़ राउंडेड",FFV=['"Segoe UI","Noto Sans Devanagari",Arial,sans-serif','Georgia,"Noto Serif Devanagari","Times New Roman",serif','Verdana,Tahoma,"Noto Sans Devanagari",sans-serif'],
+PS="Connecting with People|लोगों से जुड़ना~Networking|नेटवर्किंग~Public Dealing|जन-संपर्क~Good Listener|अच्छा श्रोता~Negotiation|मोलभाव / समझौता~Problem Solving|समस्या समाधान~Conflict Resolution|विवाद निपटारा~Adaptability|अनुकूलन क्षमता~Team Management|टीम प्रबंधन~Presentation|प्रस्तुतीकरण~Event Management|कार्यक्रम प्रबंधन~Customer Handling|ग्राहक संभालना~Telecalling|टेलीकॉलिंग~Community Work|सामुदायिक कार्य~Helping Nature|सहायक स्वभाव",
+ST="Honest|ईमानदार~Hardworking|परिश्रमी~Punctual|समय का पाबंद~Disciplined|अनुशासित~Positive Attitude|सकारात्मक सोच~Quick Learner|जल्दी सीखने वाला~Self-Confident|आत्मविश्वासी~Responsible|जिम्मेदार~Patient|धैर्यवान~Creative|रचनात्मक";
+var CW=["name","father","nat","place","addr","skc","lgc","hbc"],CS=["objc","clc","ach","ref"];
+function capW(s){return s.replace(/(^|[\s,.\-'(\/])([a-z])/g,function(m,a,b){return a+b.toUpperCase()})}
+function capS(s){return s.replace(/(^|\n|[.!?]\s+)([a-z])/g,function(m,a,b){return a+b.toUpperCase()})}
+function normEl(t){if(t.type=="file"||t.type=="checkbox"||!t.value)return;var c=" "+t.className+" ",w=CW.indexOf(t.id)>-1||(t.tagName=="INPUT"&&/ (q|b|i|c|r) /.test(c)),s=CS.indexOf(t.id)>-1||(t.tagName=="TEXTAREA"&&/ d /.test(c));if(w)t.value=capW(t.value);else if(s)t.value=capS(t.value)}
+function normAll(){document.querySelectorAll("#f input,#f textarea").forEach(normEl)}
+function demo(){var v={name:"Rajesh Kumar",father:"Suresh Kumar",dob:"2003-05-14",mobile:"9812345678",email:"rajesh.kumar@gmail.com",addr:"VPO Kalanaur, Ward No. 5, Near Govt. School, Tehsil Kalanaur",pin:"124113",place:"Rohtak",ach:"1st position in district level kabaddi, 2023\nCCC computer course certificate, 2022\nNSS volunteer for 2 years",ref:"Shri Mahesh Singh, Principal, Govt. School Kalanaur, Mob: 9899000000",skc:"Canva, WhatsApp Business",hbc:"Table Tennis"};
+ for(var i in v)$(i).value=v[i];
+ document.querySelectorAll("#edu .er").forEach(function(r,n){r.querySelector(".b").value=n<2?"HBSE Bhiwani":"MDU Rohtak";r.querySelector(".i").value="Govt. School / College, Rohtak";r.querySelector(".y").value=2018+n*2;r.querySelector(".p").value=75-n});
+ document.querySelectorAll("#exp .xr").forEach(function(r,n){r.querySelector(".c").value="ABC Traders, Rohtak";r.querySelector(".r").value="Computer Operator";r.querySelector(".f").value=(2021+n)+"-04";r.querySelector(".t").value=(2022+n)+"-03";r.querySelector(".d").value="Data entry of 100 records daily\nMaintained files and registers\nHandled customer queries"});
+ [["sk",[0,1,2]],["sk2",[0,3,7]],["st",[0,1,3]],["lg",[0,1,3]],["hb",[1,3,8]]].forEach(function(g){document.querySelectorAll("#"+g[0]+" input").forEach(function(c,i){c.checked=g[1].indexOf(i)>-1})});
+ $("decl").checked=true;normAll()}
+function sec(n,t,b){return'<div class="card"><h2 class="t">'+n+". <span data-i=\""+t+'"></span></h2>'+b+"</div>"}
+function build(){
+ $("lay").innerHTML=LAY.split("~").map(function(o,i){return'<option value="'+i+'" data-i="'+o+'"></option>'}).join("");$("ac").innerHTML=ACC.split("~").map(function(o,i){return'<option value="'+ACH[i]+'" data-i="'+o+'"></option>'}).join("");$("ls").innerHTML=LS.split("~").map(function(o,i){return'<option value="'+i+'" data-i="'+o+'"></option>'}).join("");$("ff").innerHTML=FF.split("~").map(function(o,i){return'<option value="'+i+'" data-i="'+o+'"></option>'}).join("");
+ $("f").innerHTML=
+ sec(1,"Resume Type & Style|रिज्यूमे का प्रकार व शैली",'<div class="g">'+fld("type","Resume Type|रिज्यूमे का प्रकार","sel",1,Object.keys(TY).map(function(k){return TY[k]}).join("~"),0)+fld("lay0","Layout|लेआउट","sel",1,LAY)+fld("ac0","Colour|रंग","sel",1,ACC)+fld("ls0","List Style (Bullet / Numbered)|सूची शैली (बुलेट / क्रमांक)","sel",1,LS)+fld("ff0","Font Style|फ़ॉन्ट शैली","sel",1,FF)+fld("fs0","Print Font Size|प्रिंट अक्षर आकार","sel",1,"Small (12)|छोटा (12)~Normal (14)|सामान्य (14)~Large (16)|बड़ा (16)")+'<div><label data-i="Passport Photo (optional)|पासपोर्ट फोटो (वैकल्पिक)"></label><input type="file" id="photo" accept="image/*"></div><div style="align-self:end"><label class="chk"><input type="checkbox" id="pbox" checked><span data-i="Show photo box|फोटो बॉक्स दिखाएँ"></span></label></div></div><div class="row" style="margin-top:10px"><button class="btn s" id="demo" data-i="🧪 Fill sample data (for practice)|🧪 नमूना डेटा भरें (अभ्यास हेतु)"></button><span class="hint" style="margin:0" data-i="Grey text in each box is an example. Type your own details.|हर बॉक्स में ग्रे लिखावट उदाहरण है। अपना विवरण लिखें।"></span></div>')+
+ sec(2,"Personal Details|व्यक्तिगत विवरण",'<div class="g">'+fld("name","Full Name|पूरा नाम","text",1,"e.g. Rajesh Kumar|उदा. राजेश कुमार")+fld("father","Father / Husband Name|पिता / पति का नाम","text",1,"e.g. Suresh Kumar|उदा. सुरेश कुमार")+fld("dob","Date of Birth|जन्मतिथि","date",1)+fld("gender","Gender|लिंग","sel",1,"Male|पुरुष~Female|महिला~Other|अन्य")+fld("marital","Marital Status|वैवाहिक स्थिति","sel",1,"Unmarried|अविवाहित~Married|विवाहित~Other|अन्य")+fld("nat","Nationality|राष्ट्रीयता","text",1,"e.g. Indian|उदा. भारतीय")+fld("cat","Category|श्रेणी","sel",1,"General|सामान्य~SC|एससी~BC-A|बीसी-ए~BC-B|बीसी-बी~EWS|ईडब्ल्यूएस~Other|अन्य")+fld("mobile","Mobile No.|मोबाइल नंबर","text",1,"e.g. 9812345678|उदा. 9812345678")+fld("email","Email (optional)|ईमेल (वैकल्पिक)","email",0,"e.g. rajesh.kumar@gmail.com|उदा. rajesh.kumar@gmail.com")+fld("addr","Address (Village/Ward, Tehsil)|पता (गाँव/वार्ड, तहसील)","ta",1,"e.g. VPO Kalanaur, Ward No. 5, Near Govt. School, Tehsil Kalanaur|उदा. गाँव/डाकघर कलानौर, वार्ड नं. 5, सरकारी स्कूल के पास, तहसील कलानौर")+fld("dist","District|जिला","sel",1,DIST)+fld("pin","PIN Code|पिन कोड","text",0,"e.g. 124113|उदा. 124113")+"</div>")+
+ sec(3,"Career Objective (Start)|करियर उद्देश्य (शुरुआत)",'<div class="g"><div class="full"><label data-i="Choose a humble opening statement|विनम्र प्रारंभिक कथन चुनें"></label><select id="obj"></select></div>'+fld("objc","Or write your own (optional)|या अपना लिखें (वैकल्पिक)","ta",0)+"</div>")+
+ sec(4,"Education / शैक्षिक योग्यता",'<p class="hint" data-i="Fill Qualification, Board/University and Year. Add up to 6 rows.|योग्यता, बोर्ड/विश्वविद्यालय और वर्ष भरें। अधिकतम 6 पंक्तियाँ जोड़ सकते हैं।"></p><div id="edu"></div><button class="btn s" id="addE" data-i="➕ Add education|➕ शिक्षा जोड़ें"></button>')+
+ sec(5,"Experience / Internship / Training (up to 6)|अनुभव / इंटर्नशिप / प्रशिक्षण (अधिकतम 6)",'<p class="hint" data-i="Freshers can skip this. Leave To-month empty if you still work there.|फ्रेशर इसे छोड़ सकते हैं। यदि अभी वहीं काम कर रहे हैं तो अंतिम माह खाली छोड़ें।"></p><div id="exp"></div><button class="btn s" id="addX" data-i="➕ Add experience|➕ अनुभव जोड़ें"></button>')+
+ sec(6,"Skills, Languages & Hobbies|कौशल, भाषाएँ एवं रुचियाँ",'<label data-i="Technical & Work Skills|तकनीकी व कार्य कौशल"></label>'+chips("sk",SK)+fld("skc","Other skills (comma separated)|अन्य कौशल (अल्पविराम से)","text",0,"e.g. Canva, WhatsApp Business|उदा. कैनवा, व्हाट्सऐप बिज़नेस")+'<label style="margin-top:10px" data-i="People Skills (Connecting with People)|लोगों से जुड़ने व सॉफ्ट स्किल्स"></label>'+chips("sk2",PS)+'<label style="margin-top:10px" data-i="Strengths|मजबूत पक्ष"></label>'+chips("st",ST)+'<label style="margin-top:10px" data-i="Languages Known|ज्ञात भाषाएँ"></label>'+chips("lg",LG)+fld("lgc","Other languages|अन्य भाषाएँ","text",0,"e.g. Marathi, Bengali|उदा. मराठी, बंगाली")+'<label style="margin-top:10px" data-i="Hobbies / Interests|रुचियाँ"></label>'+chips("hb",HB)+fld("hbc","Other hobbies (comma separated)|अन्य रुचियाँ (अल्पविराम से)","text",0,"e.g. Table Tennis, Kite Flying|उदा. टेबल टेनिस, पतंगबाज़ी"))+
+ sec(7,"Achievements, Certificates & References|उपलब्धियाँ, प्रमाणपत्र एवं संदर्भ",'<div class="g">'+fld("ach","Achievements / Certificates / Courses (one per line)|उपलब्धियाँ / प्रमाणपत्र / कोर्स (प्रति पंक्ति एक)","ta",0,"e.g. 1st position in district kabaddi, 2023\nCCC computer course, 2022|उदा. जिला कबड्डी में प्रथम स्थान, 2023\nसीसीसी कंप्यूटर कोर्स, 2022")+fld("ref","References (name, post, mobile) – optional|संदर्भ (नाम, पद, मोबाइल) – वैकल्पिक","ta",0,"e.g. Shri Mahesh Singh, Principal, Mob: 9899000000|उदा. श्री महेश सिंह, प्रधानाचार्य, मो.: 9899000000")+"</div>")+
+ sec(8,"Closing Request (End)|समापन निवेदन (अंत)",'<div class="g"><div class="full"><label data-i="Choose a humble closing statement|विनम्र समापन कथन चुनें"></label><select id="cl">'+O(CL)+"</select></div>"+fld("clc","Or write your own (optional)|या अपना लिखें (वैकल्पिक)","ta",0)+fld("place","Place|स्थान","text",0,"e.g. Rohtak|उदा. रोहतक")+'</div><label class="chk" style="margin-top:10px"><input type="checkbox" id="decl"><span data-i="I declare that the information given is true.|मैं घोषणा करता/करती हूँ कि दी गई जानकारी सत्य है।"></span></label><div class="err" id="e_decl"></div><div class="row" style="margin-top:12px"><button class="btn" id="gen" data-i="Generate Resume|रिज्यूमे बनाएँ"></button><button class="btn s" id="rst" data-i="Reset|रीसेट"></button></div><div class="err" id="e_all"></div>');
+ $("nat").value="Indian";setType();apply()}
+function apply(){document.querySelectorAll("[data-i]").forEach(function(e){e.textContent=L(e.dataset.i)});document.querySelectorAll("[data-p]").forEach(function(e){e.placeholder=L(e.dataset.p)});document.querySelectorAll(".lg button").forEach(function(b){b.className=b.dataset.l==lang?"a":""});document.documentElement.lang=lang=="en"?"en":"hi"}
+function tkey(){var v=$("type").value;return Object.keys(TY).filter(function(k){return TY[k]==v})[0]||"fresher"}
+function eduRow(q){var d=document.createElement("div");d.className="er";d.innerHTML='<input class="q" data-req="1" data-p="e.g. Matric (10th)|उदा. मैट्रिक (10वीं)"><input class="b" data-req="1" data-p="e.g. HBSE Bhiwani / MDU Rohtak|उदा. हरियाणा बोर्ड भिवानी / एमडीयू रोहतक"><input class="i" data-p="e.g. Govt. Sr. Sec. School, Rohtak|उदा. राजकीय वरि. मा. विद्यालय, रोहतक"><input class="y" data-v="year" data-req="1" inputmode="numeric" maxlength="4" data-p="e.g. 2020|उदा. 2020"><input class="p" data-v="pct" data-p="e.g. 78% or 8.2 CGPA|उदा. 78% या 8.2 सीजीपीए"><button class="btn x" data-rm="1">✖</button>';d.querySelector(".q").value=q?L(q):"";$("edu").appendChild(d)}
+function expRow(){var d=document.createElement("div");d.className="xr";d.innerHTML='<input class="c" data-req="1" data-p="e.g. ABC Traders, Rohtak|उदा. एबीसी ट्रेडर्स, रोहतक"><input class="r" data-req="1" data-p="e.g. Computer Operator|उदा. कंप्यूटर ऑपरेटर"><div><label data-i="From|से"></label><input class="f" type="month" data-req="1"></div><div><label data-i="To|तक"></label><input class="t" type="month"></div><textarea class="d" rows="2" style="grid-column:1/-1" data-p="e.g. Daily data entry of 100 records\nHandled customer queries|उदा. प्रतिदिन 100 रिकॉर्ड की डाटा एंट्री\nग्राहकों के प्रश्न संभालना"></textarea><button class="btn x" data-rm="1">✖</button>';$("exp").appendChild(d)}
+function setType(){var k=tkey(),o=$("obj");o.innerHTML=O(OBJ[k]);var sp=OBJ[k].split("~").map(function(x){return x.split("|")}),cp=CL.split("~")[0].split("|");$("objc").dataset.p="Example: "+sp[0][0]+" "+sp[1][0]+"|उदाहरण: "+sp[0][1]+" "+sp[1][1];$("clc").dataset.p="Example: "+cp[0]+"|उदाहरण: "+cp[1];
+ var rows=document.querySelectorAll("#edu .er"),dirty=false;rows.forEach(function(r){if(r.querySelector(".b").value||r.querySelector(".y").value||r.querySelector(".i").value)dirty=true});
+ if(!dirty){$("edu").innerHTML="";EDU[k].forEach(eduRow)}
+ if(!document.querySelectorAll("#exp .xr").length&&k=="exp"){expRow();expRow()}
+ apply()}
+function age(d){var b=new Date(d),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m==0&&n.getDate()<b.getDate()))a--;return a}
+var nm=/^[A-Za-z\u0900-\u097F .'-]{2,60}$/,NM="Letters only (2–60)|केवल अक्षर (2–60)";
+var V={name:function(s){return nm.test(s)?"":NM},father:function(s){return nm.test(s)?"":NM},
+dob:function(s){var a=age(s);return new Date(s)>new Date()?"Future date not allowed|भविष्य की तारीख मान्य नहीं":a<14||a>80?"Age should be 14–80|आयु 14–80 के बीच हो":""},
+mobile:function(s){return/^[6-9]\d{9}$/.test(s)?"":"Valid 10-digit mobile (6–9 start)|सही 10 अंक का मोबाइल (6–9 से शुरू)"},
+email:function(s){return/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)?"":"Invalid email|अमान्य ईमेल"},
+pin:function(s){return/^1[23]\d{4}$/.test(s)?"":"Haryana PIN (12xxxx/13xxxx)|हरियाणा पिन (12xxxx/13xxxx)"},
+nat:function(s){return s.length>=3?"":"Too short|बहुत छोटा"},
+year:function(s){return/^\d{4}$/.test(s)&&s>=1960&&s<=new Date().getFullYear()+1?"":"Valid year|सही वर्ष"},
+pct:function(s){var n=parseFloat(s);return n>=0&&n<=100?"":"0–100 only|केवल 0–100"}};
+function chk(el){var v=el.value.trim(),m="",k=el.dataset.v||el.id;
+ if(!v)m=el.dataset.req=="1"?"Required|आवश्यक":"";else if(V[k])m=V[k](v);
+ var e=$("e_"+el.id);if(e)e.textContent=m?L(m):"";el.title=m?L(m):"";el.classList.toggle("bad",!!m);return m}
+function picks(id,cu){var a=[];document.querySelectorAll("#"+id+" input:checked").forEach(function(c){a.push(L(c.value))});((cu&&$(cu).value)||"").split(",").forEach(function(x){x=x.trim();if(x)a.push(x)});return a}
+function fm(v){return v?new Date(v+"-01").toLocaleDateString("en-GB",{month:"short",year:"numeric"}):""}
+function sel(id){return L($(id).value)}
+function gen(){normAll();$("e_all").textContent="";$("e_decl").textContent="";var first=null;
+ document.querySelectorAll("#f [data-req]").forEach(function(e){if(e.type!="file"&&chk(e)&&!first)first=e});
+ document.querySelectorAll("#f [data-v]").forEach(function(e){if(chk(e)&&!first)first=e});
+ var k=tkey(),ex=[],ed=[];
+ document.querySelectorAll("#edu .er").forEach(function(r){ed.push([r.querySelector(".q").value.trim(),r.querySelector(".b").value.trim(),r.querySelector(".i").value.trim(),r.querySelector(".y").value.trim(),r.querySelector(".p").value.trim()])});
+ document.querySelectorAll("#exp .xr").forEach(function(r){ex.push({c:r.querySelector(".c").value.trim(),r:r.querySelector(".r").value.trim(),f:r.querySelector(".f").value,t:r.querySelector(".t").value,d:r.querySelector(".d").value.trim()})});
+ if(!first&&!ed.length){$("e_all").textContent=L("Add at least one education row.|कम से कम एक शिक्षा पंक्ति जोड़ें।");return}
+ if(!first&&k=="exp"&&!ex.length){$("e_all").textContent=L("Add at least one experience row.|कम से कम एक अनुभव पंक्ति जोड़ें।");return}
+ if(first){$("e_all").textContent=L("Please correct the fields marked in red.|कृपया लाल रंग से चिह्नित भरें/सुधारें।");first.scrollIntoView({block:"center"});first.focus();return}
+ if(!$("decl").checked){$("e_decl").textContent=L("Please tick the declaration|कृपया घोषणा पर टिक करें");return}
+ D={name:$("name").value.trim(),mobile:$("mobile").value,email:$("email").value.trim(),addr:$("addr").value.trim()+", "+sel("dist")+(($("pin").value)?" - "+$("pin").value:""),
+ obj:$("objc").value.trim()||sel("obj"),edu:ed,exp:ex,sk:picks("sk","skc"),sk2:picks("sk2",""),st:picks("st",""),lg:picks("lg","lgc"),hb:picks("hb","hbc"),ach:$("ach").value.trim(),ref:$("ref").value.trim(),
+ cl:$("clc").value.trim()||sel("cl"),place:$("place").value.trim()||sel("dist"),
+ pers:[["Father / Husband Name|पिता / पति का नाम",$("father").value.trim()],["Date of Birth|जन्मतिथि",new Date($("dob").value).toLocaleDateString("en-GB")],["Gender|लिंग",sel("gender")],["Marital Status|वैवाहिक स्थिति",sel("marital")],["Nationality|राष्ट्रीयता",$("nat").value.trim()],["Category|श्रेणी",sel("cat")]]};
+ ["lay","ac","fs","ls","ff"].forEach(function(i){$(i).selectedIndex=$(i+"0")?$(i+"0").selectedIndex:0});
+ pl=$("lay").selectedIndex;apply();draw();edited=false;
+ $("form").style.display="none";$("out").style.display="block";scrollTo(0,0)}
+function sc(t,b){return b?'<div class="sc"><h4>'+L(t)+"</h4>"+b+"</div>":""}
+function ul(a){return a.length?'<ul class="cl">'+a.map(function(x){return"<li>"+esc(x)+"</li>"}).join("")+"</ul>":""}
+function ent(r){return'<div class="ent"><span class="dt">'+esc(r[3])+"</span><b>"+esc(r[0])+"</b> – "+esc(r[1])+(r[2]?"<br>"+esc(r[2]):"")+(r[4]?" | "+esc(r[4]):"")+"</div>"}
+function draw(){var d=D,P=$("paper"),ly=LK[$("lay").selectedIndex];
+ P.className="paper ls-"+LSK[$("ls").selectedIndex];P.style.setProperty("--ac",$("ac").value);P.style.fontSize=$("fs").value+"px";P.style.fontFamily=FFV[$("ff").selectedIndex];
+ var ph=($("pbox").checked||PHOTO)?'<div class="photo">'+(PHOTO?'<img src="'+PHOTO+'" alt="">':L("Photo|फोटो"))+"</div>":"";
+ var head='<h2 class="nm">'+esc(d.name)+'</h2><div class="ct">'+L("Mob:|मो.:")+" "+esc(d.mobile)+(d.email?" | "+esc(d.email):"")+"<br>"+esc(d.addr)+"</div>";
+ var obj=sc("Career Objective|करियर उद्देश्य","<p>"+esc(d.obj)+"</p>");
+ var tb=ly=="band"||ly=="time"?0:1;
+ var edu=sc("Education|शैक्षिक योग्यता",tb?'<table class="et"><tr><th>'+L("Qualification|योग्यता")+"</th><th>"+L("Board / University|बोर्ड / विश्वविद्यालय")+"</th><th>"+L("Institute|संस्थान")+"</th><th>"+L("Year|वर्ष")+"</th><th>% / CGPA</th></tr>"+d.edu.map(function(r){return"<tr>"+r.map(function(c){return"<td>"+esc(c)+"</td>"}).join("")+"</tr>"}).join("")+"</table>":d.edu.map(ent).join(""));
+ var exp=sc("Experience / Training|अनुभव / प्रशिक्षण",d.exp.map(function(e){return'<div class="ent"><span class="dt">'+fm(e.f)+" – "+(e.t?fm(e.t):L("Present|वर्तमान"))+"</span><b>"+esc(e.r)+"</b> – "+esc(e.c)+(e.d?"<ul>"+e.d.split(/\n+/).filter(Boolean).map(function(x){return"<li>"+esc(x)+"</li>"}).join("")+"</ul>":"")+"</div>"}).join(""));
+ var sk=sc("Technical & Work Skills|तकनीकी व कार्य कौशल",ul(d.sk)),sk2=sc("People Skills (Connecting with People)|लोगों से जुड़ने के कौशल",ul(d.sk2)),st=sc("Strengths|मजबूत पक्ष",ul(d.st)),lg=sc("Languages|भाषाएँ",ul(d.lg)),hb=sc("Hobbies|रुचियाँ",ul(d.hb));
+ var pers=sc("Personal Details|व्यक्तिगत विवरण",'<table class="pt">'+d.pers.map(function(r){return"<tr><td>"+L(r[0])+"</td><td>"+esc(r[1])+"</td></tr>"}).join("")+"</table>");
+ var ach=sc("Achievements & Certificates|उपलब्धियाँ एवं प्रमाणपत्र",d.ach?"<ul>"+d.ach.split(/\n+/).filter(Boolean).map(function(x){return"<li>"+esc(x)+"</li>"}).join("")+"</ul>":"");
+ var ref=sc("References|संदर्भ",d.ref?"<p style='white-space:pre-wrap'>"+esc(d.ref)+"</p>":"");
+ var dc=sc("Declaration|घोषणा","<p>"+esc(d.cl)+"</p>")+'<div class="sig"><div>'+L("Date:|दिनांक:")+" "+new Date().toLocaleDateString("en-GB")+"<br>"+L("Place:|स्थान:")+" "+esc(d.place)+'</div><div style="text-align:center"><br><br>('+esc(d.name)+")<br>"+L("Signature|हस्ताक्षर")+"</div></div>";
+ var A=sk+sk2+st+lg+hb+pers,M=obj+edu+exp+ach+ref,h;
+ if(ly=="left")h='<div class="rs"><aside>'+ph+A+"</aside><section>"+head+M+dc+"</section></div>";
+ else if(ly=="right")h='<div class="rs rt"><section>'+head+M+dc+"</section><aside>"+ph+A+"</aside></div>";
+ else if(ly=="band")h='<div class="bn">'+ph+"<div>"+head+'</div></div><div class="rs2"><section>'+M+"</section><aside>"+A+"</aside></div>"+dc;
+ else if(ly=="time")h='<div class="hd"><div>'+head+"</div>"+ph+'</div><div class="tm">'+obj+edu+exp+"</div>"+sk+sk2+st+lg+hb+pers+ach+ref+dc;
+ else if(ly=="comp")h='<div class="hd"><div>'+head+"</div>"+ph+"</div>"+obj+edu+exp+'<div class="g2">'+A+"</div>"+ach+ref+dc;
+ else h='<div class="hd"><div>'+head+"</div>"+ph+"</div>"+obj+edu+exp+sk+sk2+st+lg+hb+pers+ach+ref+dc;
+ P.innerHTML=h;
+ $("fnh").textContent=L("The 📄 Save as PDF button downloads a PDF file directly. File name: |📄 PDF सेव करें बटन सीधे PDF फ़ाइल डाउनलोड करता है। फ़ाइल नाम: ")+fname()+".pdf. "+L("Print button: if the print window does not open, press Ctrl+P or open the downloaded file in Chrome.|प्रिंट बटन: यदि प्रिंट विंडो न खुले तो Ctrl+P दबाएँ या डाउनलोड की हुई फ़ाइल को Chrome में खोलें।")}
+function fname(){return"Resume_"+((D&&D.name)||"Applicant").replace(/[^A-Za-z0-9\u0900-\u097F]+/g,"_").replace(/^_+|_+$/g,"")+"_"+new Date().toISOString().slice(0,10)}
+function note(m){var t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(note.t);note.t=setTimeout(function(){t.style.display="none"},7000)}
+function ok(){note(L("Layout changed – your manual edits were reset.|लेआउट बदल गया – आपके हाथ से किए बदलाव हट गए।"));return true}
+var T0=document.title;window.addEventListener("afterprint",function(){document.title=T0});
+function cur(){var s=getSelection();if(!s.rangeCount)return null;var n=s.anchorNode;n=n&&n.nodeType==3?n.parentNode:n;return n&&n.closest&&$("paper").contains(n)?n.closest("li,.ent,tr"):null}
+$("f").addEventListener("input",function(e){var t=e.target;if(t.id=="mobile"||t.id=="pin")t.value=t.value.replace(/\D/g,"");if(t.classList.contains("y"))t.value=t.value.replace(/\D/g,"");if(t.dataset&&(t.dataset.req||t.dataset.v||V[t.id]))chk(t)});
+$("f").addEventListener("change",function(e){if(e.target.id=="type")setType()});
+$("f").addEventListener("click",function(e){var t=e.target;if(t.id=="addE"){if(document.querySelectorAll("#edu .er").length<6){eduRow("");apply()}}
+ if(t.id=="addX"){if(document.querySelectorAll("#exp .xr").length<6){expRow();apply()}else note(L("Maximum 6 experience rows|अधिकतम 6 अनुभव पंक्तियाँ"))}
+ if(t.dataset.rm)t.parentNode.remove();if(t.id=="gen")gen();if(t.id=="demo")demo();
+ if(t.id=="rst"){D=null;PHOTO="";build()}});
+$("f").addEventListener("change",function(e){if(e.target.id=="photo"){var f=e.target.files[0];if(!f)return;if(f.size>3e6){note(L("Photo must be under 3 MB|फोटो 3 MB से छोटी हो"));e.target.value="";PHOTO="";return}var r=new FileReader();r.onload=function(){PHOTO=r.result};r.readAsDataURL(f)}});
+document.querySelector(".lg").addEventListener("click",function(e){var l=e.target.dataset.l;if(l){lang=l;apply();if(D&&$("out").style.display=="block"&&!edited)draw()}});
+$("back").onclick=function(){$("out").style.display="none";$("form").style.display="block"};
+$("lay").onchange=function(){if(edited&&!ok(L("Changing layout discards manual edits. Continue?|लेआउट बदलने से आपके हाथ से किए बदलाव हट जाएँगे। जारी रखें?"))){this.selectedIndex=pl;return}pl=this.selectedIndex;edited=false;draw()};
+$("ac").onchange=function(){$("paper").style.setProperty("--ac",this.value)};
+$("fs").onchange=function(){$("paper").style.fontSize=this.value+"px"};
+$("ls").onchange=function(){$("paper").className="paper ls-"+LSK[this.selectedIndex]};
+$("ff").onchange=function(){$("paper").style.fontFamily=FFV[this.selectedIndex]};
+$("f").addEventListener("focusout",function(e){normEl(e.target)});
+$("paper").addEventListener("input",function(){edited=true});
+function doPrint(){var P=$("paper"),c=P.cloneNode(true),nm=fname();c.removeAttribute("contenteditable");c.removeAttribute("id");
+ var css=document.querySelector("style").textContent,
+ html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+nm+'</title><style>'+css+'@page{size:A4;margin:12mm}html,body{background:#fff!important;margin:0}.paper{border:0!important;padding:0!important;border-radius:0!important;outline:none}.noprint,#toast{display:none!important}</style></head><body>'+c.outerHTML+'</body></html>';
+ var fr=document.createElement("iframe");fr.setAttribute("style","position:fixed;left:-10000px;top:0;width:703px;height:1050px;border:0");document.body.appendChild(fr);
+ var w=fr.contentWindow,dd=w.document;dd.open();dd.write(html);dd.close();
+ setTimeout(function(){var fired=false,mark=function(){fired=true};window.addEventListener("beforeprint",mark);w.addEventListener("beforeprint",mark);
+  try{var pg=dd.querySelector(".pg1")||dd.querySelector(".paper");
+   if($("fit")&&$("fit").checked&&pg){var h=pg.scrollHeight;if(h>1030)pg.style.zoom=Math.max(.55,1030/h)}
+   document.title=nm;w.focus();w.print()}catch(e){}
+  window.removeEventListener("beforeprint",mark);document.title=T0;
+  if(!fired){if(fr.parentNode)fr.parentNode.removeChild(fr);note(L("Printing is blocked in this window, so a PDF is being saved instead. Open that PDF and press Ctrl+P to print on one A4 sheet.|इस विंडो में प्रिंट रुका हुआ है, इसलिए PDF सेव की जा रही है। उस PDF को खोलकर Ctrl+P दबाएँ और एक A4 शीट पर प्रिंट करें।"));makePdf();return}
+  setTimeout(function(){if(fr.parentNode)fr.parentNode.removeChild(fr)},60000)},350)}
+function loadJs(u){return new Promise(function(res,rej){var s=document.createElement("script");s.src=u;s.onload=res;s.onerror=function(){rej(new Error("load"))};document.head.appendChild(s)})}
+function libs(){return(window.html2canvas?Promise.resolve():loadJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js")).then(function(){return window.jspdf?0:loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")})}
+function addCv(pdf,cv,fit){var W=186,H=273,ih=cv.height*W/cv.width;
+ if(ih<=H||(fit&&H/ih>=.55)){var s=ih>H?H/ih:1;pdf.addImage(cv.toDataURL("image/jpeg",.95),"JPEG",12,12,W*s,ih*s);return}
+ var ph=Math.floor(cv.height*H/ih),y=0;while(y<cv.height){var h=Math.min(ph,cv.height-y),t=document.createElement("canvas");t.width=cv.width;t.height=h;t.getContext("2d").drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);if(y>0)pdf.addPage();pdf.addImage(t.toDataURL("image/jpeg",.95),"JPEG",12,12,W,h*W/cv.width);y+=h}}
+function buildPdf(){var P=$("paper"),c=P.cloneNode(true);c.removeAttribute("contenteditable");c.removeAttribute("id");
+ c.style.cssText=P.style.cssText+";position:fixed;left:-10000px;top:0;width:703px;border:0;padding:0;border-radius:0;background:#fff;overflow:visible";
+ [].slice.call(c.querySelectorAll(".noprint")).forEach(function(e){e.parentNode.removeChild(e)});
+ if(c.classList.contains("noatt")){var n=c.querySelector(".nt");if(n)n.parentNode.removeChild(n)}
+ document.body.appendChild(c);
+ var pg=c.querySelector(".pg1"),secs=pg?[pg].concat([].slice.call(c.querySelectorAll(".nt"))):[c],fit=!!($("fit")&&$("fit").checked),pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4"}),i=0;
+ function next(){if(i>=secs.length){c.parentNode.removeChild(c);return pdf}
+  return window.html2canvas(secs[i],{scale:2,backgroundColor:"#ffffff",useCORS:true}).then(function(cv){if(i>0)pdf.addPage();addCv(pdf,cv,fit);i++;return next()})}
+ return next().catch(function(e){if(c.parentNode)c.parentNode.removeChild(c);throw e})}
+function saveBlob(pdf){var blob=pdf.output("blob"),nm=fname()+".pdf";
+ return(window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null)).then(function(dl){
+  if(dl)return dl.save({filename:nm,data:blob});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nm;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.parentNode.removeChild(a)},4000)})}
+function makePdf(){var b=$("pdf"),old=b.textContent;b.disabled=true;b.textContent=L("Preparing PDF…|PDF बन रही है…");
+ libs().then(buildPdf).then(saveBlob).catch(function(e){if(e&&e.code=="declined")return;note(L("Could not create the PDF here. Please use the Print button (Ctrl+P → Save as PDF), or open the downloaded file in Chrome.|यहाँ PDF नहीं बन सकी। कृपया प्रिंट बटन (Ctrl+P → Save as PDF) का उपयोग करें या डाउनलोड की हुई फ़ाइल को Chrome में खोलें।"))}).then(function(){b.disabled=false;b.textContent=old})}
+$("pdf").onclick=makePdf;
+$("deli").onclick=function(){var r=cur();if(!r){note(L("First click inside the item to delete.|पहले उस पंक्ति में क्लिक करें जिसे हटाना है।"));return}r.remove();edited=true};
+$("addi").onclick=function(){var r=cur();if(!r||r.tagName!="LI"){note(L("Click inside a bullet item first.|पहले किसी बुलेट पंक्ति में क्लिक करें।"));return}var n=document.createElement("li");n.innerHTML="&nbsp;";r.after(n);edited=true;var g=document.createRange();g.selectNodeContents(n);getSelection().removeAllRanges();getSelection().addRange(g)};
+build();
+</script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+SevaSphere Global System Demo v3 — brand application and homepage foundation
+
+Brand:
+- Name: SevaSphere
+- Visual style: premium emerald green and white
+- Tagline direction: Less searching. More work done.
+
+Branding changes:
+- Homepage title, description, social metadata and WebSite JSON-LD updated.
+- Removed the old smartcsctools.org canonical, social URL and social image references so the demo does not misidentify its host.
+- Dynamic site header/footer and favicon updated to SevaSphere.
+- Tool page titles and template starter updated with the SevaSphere suffix.
+- Shared style comments, guide, manifest and readme updated.
+
+Preservation:
+- Existing tool files and tool-specific JavaScript remain in place.
+- Shared style architecture and starter template remain intended for 100+ page growth.
+
+Not yet completed:
+- No full visual redesign or functional regression test for every tool page.
+- Per-page descriptions, canonical URLs, social previews and sitemap need a final-domain SEO audit.
+- Font Awesome CDN is retained because current pages depend on it.
+
+Test before publishing: homepage search, category filters, theme picker, several representative image/PDF/document tools, and mobile layout. This package is not deployed to any GitHub account.
