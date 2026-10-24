@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SevaSphere Pro Studio — Document & Photo Tools</title>
+<!--
+  DocFix Pro Studio v3.12 (Complete Edition)
+  - Four-corner document crop/dewarp (TL, TR, BR, BL)
+  - Complete Undo/Redo state serialization & restoration
+  - Robust pointer event lifecycle & listener cleanup
+  - File reader & image decoding error handling
+  - Crop geometry & quadrilateral validation
+  - Transparent signature and advanced background rendering
+-->
+
+<style>
+:root {
+  --bg: #0b0f19;
+  --panel: #131c2e;
+  --panel-hover: #1e293b;
+  --border: #1e293b;
+  --border-focus: #334155;
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-glow: rgba(16, 185, 129, 0.25);
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --pin: #00e5ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+header {
+  height: 56px;
+  min-height: 56px;
+  flex: 0 0 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #0f172a;
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+h1 span {
+  color: var(--accent);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.action-bar {
+  display: flex;
+  gap: 8px;
+}
+
+button, select {
+  background: #1e293b;
+  color: var(--text);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: #334155;
+  border-color: #475569;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #022c22;
+  border-color: var(--accent);
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+}
+
+button.blue {
+  background: var(--blue);
+  border-color: #3b82f6;
+}
+
+button.blue:hover {
+  background: var(--blue-hover);
+}
+
+button.danger {
+  background: var(--danger-bg);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+button.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+button.small, select.small {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 10px;
+  align-items: stretch;
+}
+
+.pane {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.pane-header {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.controls {
+  position: relative;
+  z-index: 30;
+  isolation: isolate;
+  flex: 0 0 132px;
+  height: 132px;
+  min-height: 132px;
+  max-height: 132px;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 7px;
+  background: #101827;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-rows: repeat(4, 29px);
+  gap: 3px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+
+
+/* Systematic four-row tool layout. Each row is a single horizontal lane.
+   When a pane is narrow, the lane scrolls horizontally instead of creating
+   accidental fourth/fifth rows. */
+.control-row {
+  position: relative;
+  z-index: 31;
+  min-width: 0;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  min-height: 29px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+  padding: 1px 0;
+}
+
+
+.control-row > * {
+  flex: 0 0 auto;
+}
+
+.control-row::-webkit-scrollbar { height: 4px; }
+.control-row::-webkit-scrollbar-track { background: transparent; }
+.control-row::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; }
+
+.control-row .tool-sep {
+  flex: 0 0 1px;
+  margin: 0 1px;
+}
+
+.control-row .group {
+  flex: 0 0 auto;
+}
+
+.control-row .preset {
+  flex: 0 0 auto;
+}
+
+.control-row .swatch-group {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* v5.2 layout: four compact rows — basic image, output/crop, background, signature/refine. */
+.control-row-1 { background: rgba(0,229,255,.018); }
+.control-row-2 { background: rgba(34,197,94,.018); }
+.control-row-3 { background: rgba(59,130,246,.018); }
+.control-row-4 { background: rgba(168,85,247,.045); }
+
+/* More breathing room and distinct button identities in each toolbar. */
+.controls .control-row { gap: 6px; padding: 4px 6px; border-radius: 7px; }
+.controls button.small { padding: 6px 9px; min-height: 29px; }
+.controls .control-row button:nth-of-type(4n+1) { background:#164e63; border-color:#0891b2; color:#cffafe; }
+.controls .control-row button:nth-of-type(4n+2) { background:#14532d; border-color:#16a34a; color:#dcfce7; }
+.controls .control-row button:nth-of-type(4n+3) { background:#713f12; border-color:#ca8a04; color:#fef3c7; }
+.controls .control-row button:nth-of-type(4n) { background:#4c1d95; border-color:#8b5cf6; color:#ede9fe; }
+/* Keep compact controls predictable across both panes. */
+.controls button.small,
+.controls select.small {
+  min-height: 26px;
+  white-space: nowrap;
+}
+
+.controls .group {
+  min-height: 28px;
+}
+
+.controls .group input[type=range] {
+  width: 46px;
+}
+
+.controls .preset select {
+  min-width: 92px;
+  max-width: 112px;
+}
+
+/* Keep four toolbar lanes stable. Background and signature tools are split
+   across rows 3 and 4 so every control remains comfortably usable. */
+.background-tools { overflow-x: auto !important; overflow-y: hidden !important; flex-wrap: nowrap !important; }
+.background-tools .swatch-group { flex-wrap: nowrap; white-space: nowrap; gap: 5px; padding: 2px 5px; }
+.background-tools .swatch { width: 21px; height: 21px; flex: 0 0 21px; }
+.background-tools .bg-label { color:#e9d5ff; font-size:10px; font-weight:700; white-space:nowrap; }
+.background-tools .bg-color-input { width:28px !important; height:26px !important; flex:0 0 28px; }
+.background-tools .bg-action { min-width: 82px; }
+.eraser-on { background:#b91c1c !important; border-color:#f87171 !important; color:#fff !important; }
+.eraser-mode { cursor:crosshair; }
+.eraser-cursor { position:absolute; display:none; pointer-events:none; z-index:45; border:2px solid #fbbf24; border-radius:50%; box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 0 10px rgba(251,191,36,.45); transform:translate(-50%,-50%); }
+
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.group label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+input[type=range] {
+  width: 52px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tool-sep {
+  height: 20px;
+  width: 1px;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+.canvas-area {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 8px;
+  background-image: 
+    linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%), 
+    linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.02) 75%), 
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.02) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
+.canvas-container {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  line-height: 0;
+  margin: auto;
+  flex: 0 1 auto;
+  overflow: visible;
+  touch-action: none;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+}
+
+.canvas-container canvas {
+  max-width: calc(100% - 12px) !important;
+  max-height: calc(100% - 12px) !important;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}
+
+/* Transparent output is intentionally shown over the pane checkerboard. */
+/* v5.2 Canvas Workspace: maximize usable crop area while keeping the full image visible. */
+.canvas-area .canvas-container {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.canvas-area .canvas-container canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.canvas-container.signature-transparent canvas { background: transparent; }
+
+.canvas-container.crop-only {
+  box-shadow: 0 20px 30px rgba(0,0,0,0.5);
+}
+
+.canvas-container.drag-image {
+  cursor: move;
+}
+
+.crop-frame {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--pin);
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+  border-radius: 4px;
+}
+
+.crop-frame.active {
+  display: block;
+}
+
+.polygon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  overflow: visible;
+}
+
+.pin {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  touch-action: none;
+  user-select: none;
+  background: var(--pin);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.22), 0 0 14px rgba(0, 229, 255, 0.85);
+  z-index: 40;
+  transition: background-color 0.1s ease;
+}
+
+.pin:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.pin:active {
+  cursor: grabbing;
+  background: #f43f5e;
+}
+
+.upload {
+  border: 2px dashed #334155;
+  padding: 36px;
+  text-align: center;
+  border-radius: 12px;
+  width: 85%;
+  max-width: 320px;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.4);
+  transition: all 0.2s ease;
+}
+
+.upload:hover {
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.status {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(4px);
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  z-index: 30;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.8);
+  backdrop-filter: blur(6px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(16, 185, 129, 0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.swatch-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.swatch {
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.swatch:hover {
+  transform: scale(1.2);
+}
+
+.print-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 10px 8px;
+  padding: 7px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--text);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.print-settings > div:first-child {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.print-setting-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.print-setting-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.print-setting-grid select, .print-setting-grid input {
+  min-width: 140px;
+  background: #1e293b;
+  color: #fff;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.print-setting-grid input {
+  width: 80px;
+  min-width: 80px;
+}
+
+.note {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.workspace-note {
+  padding-top: 2px;
+}
+
+@media print {
+  .print-settings { display: none; }
+}
+
+#bg-library-1, #bg-library-2 {
+  max-width: 110px;
+  padding: 4px;
+}
+
+@media(max-width: 900px) {
+  .main { flex-direction: column; overflow: auto; }
+  .pane { min-height: 380px; }
+  .canvas-area { min-height: 260px; }
+}
+
+/* v4.9: dedicated background toolbar row with visible, labeled controls */
+.control-row-4 { background: rgba(168,85,247,.075); border: 1px solid rgba(168,85,247,.28); }
+.bg-tools-title { color: #e9d5ff; font-size: 12px; letter-spacing: .3px; margin-right: 4px; }
+.background-tools .swatch-group { display:flex; align-items:center; flex-wrap:wrap; gap:7px; white-space:normal; }
+.background-tools .swatch { display:inline-flex; align-items:center; justify-content:center; width:23px; height:23px; border:1px solid #94a3b8; border-radius:5px; cursor:pointer; box-shadow:0 1px 3px #0005; }
+.background-tools .bg-save { background:#854d0e !important; border-color:#eab308 !important; color:#fef9c3 !important; }
+.background-tools .bg-image { background:#075985 !important; border-color:#38bdf8 !important; color:#e0f2fe !important; }
+</style>
+<meta name="application-name" content="SevaSphere Pro Studio"><meta name="description" content="Prepare documents, crop images, refine photos and print ID cards with SevaSphere Pro Studio."></head>
+<body>
+<header>
+  <h1>SevaSphere <span>PRO STUDIO</span></h1>
+  <div class="action-bar">
+    <button class="small" onclick="undoAction(activePane)">↶ Undo</button>
+    <button class="small" onclick="redoAction(activePane)">↷ Redo</button>
+    <button class="small" onclick="showHistoryInfo(activePane)">🕘 History</button>
+    <button class="primary" onclick="printIDCardFrontBack()">🪪 Print ID</button>
+    <button class="primary" onclick="printPhotoSheet5x5()">📸 Photo 5+5</button>
+    <button onclick="triggerSafePrint()">🖨️ Print Doc (Both)</button>
+    <button class="blue" onclick="printSinglePaneA4(1)">📄 Pane 1 • A4 Full Page</button>
+    <button class="blue" onclick="printSinglePaneA4(2)">📄 Pane 2 • A4 Full Page</button>
+    <button class="primary" onclick="saveAllImages()">💾 Export</button>
+    <button class="danger" onclick="exitStudio()">🚪 Exit</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- PANE 1 -->
+  <section class="pane" id="pane-1">
+    <div class="pane-header">
+      <span>PANE 1 • FRONT</span>
+      <div class="header-actions">
+        <button id="btn-change-1" class="small" style="display:none" onclick="document.getElementById('file-1').click()">🔄 Change</button>
+        <button id="btn-delete-1" class="danger small" style="display:none" onclick="deleteImage(1)">🗑️ Clear</button>
+        <button id="btn-upload-1" class="small" onclick="document.getElementById('file-1').click()">📁 Upload</button>
+      </div>
+      <input id="file-1" type="file" accept="image/*" hidden onchange="loadFile(event,1)">
+    </div>
+    <div class="controls" id="controls-1">
+      <div class="control-row control-row-1" role="toolbar" aria-label="Basic image tools pane 1">
+
+      <div class="group"><button class="small" onclick="rotateImage(1,-90)">↺ 90°</button><button class="small" onclick="rotateImage(1,90)">↻ 90°</button></div>
+      <div class="group"><label>Fine:</label><input type="range" id="fine-angle-1" min="-15" max="15" value="0" step=".5" oninput="processImage(1)"></div>
+      <button class="small" onclick="setMode(1,'doc')">📄 Doc</button><button class="small" onclick="setMode(1,'sig')">✍️ Sign</button>
+      <div class="group"><label>Contrast:</label><input type="range" id="contrast-1" min="50" max="250" value="100" oninput="processImage(1)"></div>
+      <div class="group"><label>Bright:</label><input type="range" id="bright-1" min="50" max="180" value="100" oninput="processImage(1)"></div>
+      <div class="group"><label>Shadow:</label><input type="range" id="shadow-1" min="0" max="100" value="0" oninput="processImage(1)"></div>
+      <button class="small" onclick="removeShadow(1)">☀ Shadow</button>
+      </div>
+      <div class="control-row control-row-2" role="toolbar" aria-label="Output and crop tools pane 1">
+      <div class="preset"><label class="note">Mode:</label>
+        <select id="preset-1" onchange="applyPresetPreview(1)">
+          <option value="auto">Auto Doc</option>
+          <option value="passport">Passport 35×45 mm</option>
+          <option value="idcard">ID Card 85.6×54 mm</option>
+          <option value="square">Square 51×51 mm</option>
+          <option value="a4">A4 Ratio</option>
+        </select>
+      </div>
+      <div class="group"><label>Frame:</label><select id="frame-1" class="small" onchange="updateFrame(1)"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select><input type="color" id="frame-color-1" value="#00e5ff" title="Frame color" aria-label="Frame color" onchange="updateFrame(1)" style="width:22px;height:22px;padding:0;border:1px solid #64748b;border-radius:4px;background:none;cursor:pointer"><button class="small" type="button" onclick="toggleFrame(1)">🖼 Frame</button></div>
+      <button class="primary small" onclick="applySmartCropDewarp(1)">✂️ Crop</button>
+      <button class="small" onclick="autoCorners(1)">✨ Auto Crop</button>
+      <button class="small" onclick="togglePins(1)">📌 Pins</button>
+      <button class="small" onclick="toggleImageDrag(1)">🖱️ Move</button>
+      <button class="small" onclick="resetCrop(1)">Reset</button>
+      <div class="tool-sep"></div>
+      <div class="group"><label>Sh.Fix:</label><input type="range" id="shadowfix-1" min="0" max="100" value="55" oninput="if(state[1].shadowRemoved) applyShadowFix(1)"></div>
+      <div class="group"><label>Detail:</label><input type="range" id="shadowdetail-1" min="0" max="100" value="55" oninput="if(state[1].shadowRemoved) applyShadowFix(1)"></div>
+      </div>
+      <div class="control-row control-row-3 background-tools" role="toolbar" aria-label="Background, eraser and signature tools pane 1">
+        <strong class="bg-tools-title">🎨 BG</strong>
+        <div class="swatch-group">
+          <span class="bg-label">Fill:</span>
+          <span class="swatch" style="background:transparent" title="Transparent background" aria-label="Transparent background" onclick="setBGColor(1,'transparent')">◫</span>
+          <span class="swatch" style="background:#fff" title="White background" aria-label="White background" onclick="setBGColor(1,'#fff')"></span>
+          <span class="swatch" style="background:#0066cc" title="Blue background" aria-label="Blue background" onclick="setBGColor(1,'#0066cc')"></span>
+          <span class="swatch" style="background:#87ceeb" title="Sky blue background" aria-label="Sky blue background" onclick="setBGColor(1,'#87ceeb')"></span>
+          <span class="swatch" style="background:#ef4444" title="Red background" aria-label="Red background" onclick="setBGColor(1,'#ef4444')"></span>
+          <span class="swatch" style="background:#64748b" title="Gray background" aria-label="Gray background" onclick="setBGColor(1,'#64748b')"></span>
+          <input type="color" id="picker-1" class="bg-color-input" title="Choose custom background fill" aria-label="Choose custom background fill" value="#ffffff" onchange="setBGColor(1,this.value)">
+          <button class="small bg-save bg-action" onclick="saveBGColor(1)">＋ Save</button>
+          <button class="small bg-image bg-action" onclick="chooseBGImage(1)">🖼 BG Image</button>
+          <input id="bg-file-1" type="file" accept="image/*" hidden onchange="loadBGImage(event,1)">
+          <select id="bg-library-1" class="small" aria-label="Saved backgrounds" onchange="applySavedBG(1,this.value)"><option value="">Saved BG</option></select>
+        </div>
+        <button class="small" id="eraser-btn-1" onclick="toggleEraser(1)" title="Manually erase unwanted AI background or foreground pixels">🧽 Eraser</button>
+        <div class="group" title="Manual eraser brush size"><label>Size:</label><input type="range" id="eraser-size-1" min="4" max="120" value="28" step="2" oninput="updateEraserCursor(1)"></div>
+      </div>
+      <div class="control-row control-row-4" role="toolbar" aria-label="Signature and refinement tools pane 1">
+        <button class="small" onclick="setMode(1,'sig')">✍️ Sign</button><button class="blue small" onclick="removeBackgroundAI(1)">✂️ Remove BG</button><button class="small" onclick="saveSignaturePNG(1)">✍️ Save PNG</button><div class="group"><label for="signature-color-1">Ink:</label><input type="color" id="signature-color-1" value="#123b9c" title="Signature ink color" aria-label="Signature ink color" onchange="setSignatureColor(1,this.value)" style="width:28px;height:26px;padding:1px;border:1px solid #64748b;border-radius:4px;background:none;cursor:pointer"></div><button class="small" onclick="copySignaturePNG(1)">📋 Copy</button>
+        <div class="group bg-refine"><label>Edge:</label><input type="range" id="bg-edge-1" min="0" max="100" value="55" step="1" oninput="if(state[1].foregroundImg) refineForeground(1)"></div>
+        <div class="group bg-refine"><label>Clean:</label><input type="range" id="bg-clean-1" min="0" max="100" value="25" step="1" oninput="if(state[1].foregroundImg) refineForeground(1)"></div>
+        <div class="group bg-refine"><label>Feather:</label><input type="range" id="bg-feather-1" min="0" max="100" value="35" step="1" oninput="if(state[1].foregroundImg) refineForeground(1)"></div>
+        <button class="small" onclick="enhanceImage(1)">🪄 Enh.Pic.</button>
+      </div>
+    </div>
+    <div class="canvas-area" id="box-1">
+      <div class="upload" id="drop-1"><strong>Drag & Drop Image Here</strong><br><span class="note">or click to select file</span></div>
+      <div class="canvas-container" id="container-1" style="display:none">
+        <canvas id="canvas-1"></canvas><div class="crop-frame" id="framebox-1"></div><div class="eraser-cursor" id="eraser-cursor-1"></div>
+        <svg class="polygon" id="svg-1"><polygon id="poly-1" points="" fill="#00e5ff26" stroke="#00e5ff" stroke-width="2" stroke-dasharray="5 3"/></svg>
+        <div class="pin" id="p1-0"></div><div class="pin" id="p1-1"></div><div class="pin" id="p1-2"></div><div class="pin" id="p1-3"></div>
+      </div>
+      <div class="status" id="status-1">Ready</div>
+      <div class="loading" id="loading-1"><div class="spinner"></div><span id="load-msg-1">Processing...</span></div>
+    </div>
+  </section>
+
+  <!-- PANE 2 -->
+  <section class="pane" id="pane-2">
+    <div class="pane-header">
+      <span>PANE 2 • BACK</span>
+      <div class="header-actions">
+        <button id="btn-change-2" class="small" style="display:none" onclick="document.getElementById('file-2').click()">🔄 Change</button>
+        <button id="btn-delete-2" class="danger small" style="display:none" onclick="deleteImage(2)">🗑️ Clear</button>
+        <button id="btn-upload-2" class="small" onclick="document.getElementById('file-2').click()">📁 Upload</button>
+      </div>
+      <input id="file-2" type="file" accept="image/*" hidden onchange="loadFile(event,2)">
+    </div>
+    <div class="controls" id="controls-2">
+      <div class="control-row control-row-1" role="toolbar" aria-label="Basic image tools pane 2">
+
+      <div class="group"><button class="small" onclick="rotateImage(2,-90)">↺ 90°</button><button class="small" onclick="rotateImage(2,90)">↻ 90°</button></div>
+      <div class="group"><label>Fine:</label><input type="range" id="fine-angle-2" min="-15" max="15" value="0" step=".5" oninput="processImage(2)"></div>
+      <button class="small" onclick="setMode(2,'doc')">📄 Doc</button><button class="small" onclick="setMode(2,'sig')">✍️ Sign</button>
+      <div class="group"><label>Contrast:</label><input type="range" id="contrast-2" min="50" max="250" value="100" oninput="processImage(2)"></div>
+      <div class="group"><label>Bright:</label><input type="range" id="bright-2" min="50" max="180" value="100" oninput="processImage(2)"></div>
+      <div class="group"><label>Shadow:</label><input type="range" id="shadow-2" min="0" max="100" value="0" oninput="processImage(2)"></div>
+      <button class="small" onclick="removeShadow(2)">☀ Shadow</button>
+      </div>
+      <div class="control-row control-row-2" role="toolbar" aria-label="Output and crop tools pane 2">
+      <div class="preset"><label class="note">Mode:</label>
+        <select id="preset-2" onchange="applyPresetPreview(2)">
+          <option value="auto">Auto Doc</option>
+          <option value="passport">Passport 35×45 mm</option>
+          <option value="idcard">ID Card 85.6×54 mm</option>
+          <option value="square">Square 51×51 mm</option>
+          <option value="a4">A4 Ratio</option>
+        </select>
+      </div>
+      <div class="group"><label>Frame:</label><select id="frame-2" class="small" onchange="updateFrame(2)"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select><input type="color" id="frame-color-2" value="#00e5ff" title="Frame color" aria-label="Frame color" onchange="updateFrame(2)" style="width:22px;height:22px;padding:0;border:1px solid #64748b;border-radius:4px;background:none;cursor:pointer"><button class="small" type="button" onclick="toggleFrame(2)">🖼 Frame</button></div>
+      <button class="primary small" onclick="applySmartCropDewarp(2)">✂️ Crop</button>
+      <button class="small" onclick="autoCorners(2)">✨ Auto Crop</button>
+      <button class="small" onclick="togglePins(2)">📌 Pins</button>
+      <button class="small" onclick="toggleImageDrag(2)">🖱️ Move</button>
+      <button class="small" onclick="resetCrop(2)">Reset</button>
+      <div class="tool-sep"></div>
+      <div class="group"><label>Sh.Fix:</label><input type="range" id="shadowfix-2" min="0" max="100" value="55" oninput="if(state[2].shadowRemoved) applyShadowFix(2)"></div>
+      <div class="group"><label>Detail:</label><input type="range" id="shadowdetail-2" min="0" max="100" value="55" oninput="if(state[2].shadowRemoved) applyShadowFix(2)"></div>
+      </div>
+      <div class="control-row control-row-3 background-tools" role="toolbar" aria-label="Background, eraser and signature tools pane 2">
+        <strong class="bg-tools-title">🎨 BG</strong>
+        <div class="swatch-group">
+          <span class="bg-label">Fill:</span>
+          <span class="swatch" style="background:transparent" title="Transparent background" aria-label="Transparent background" onclick="setBGColor(2,'transparent')">◫</span>
+          <span class="swatch" style="background:#fff" title="White background" aria-label="White background" onclick="setBGColor(2,'#fff')"></span>
+          <span class="swatch" style="background:#0066cc" title="Blue background" aria-label="Blue background" onclick="setBGColor(2,'#0066cc')"></span>
+          <span class="swatch" style="background:#87ceeb" title="Sky blue background" aria-label="Sky blue background" onclick="setBGColor(2,'#87ceeb')"></span>
+          <span class="swatch" style="background:#ef4444" title="Red background" aria-label="Red background" onclick="setBGColor(2,'#ef4444')"></span>
+          <span class="swatch" style="background:#64748b" title="Gray background" aria-label="Gray background" onclick="setBGColor(2,'#64748b')"></span>
+          <input type="color" id="picker-2" class="bg-color-input" title="Choose custom background fill" aria-label="Choose custom background fill" value="#ffffff" onchange="setBGColor(2,this.value)">
+          <button class="small bg-save bg-action" onclick="saveBGColor(2)">＋ Save</button>
+          <button class="small bg-image bg-action" onclick="chooseBGImage(2)">🖼 BG Image</button>
+          <input id="bg-file-2" type="file" accept="image/*" hidden onchange="loadBGImage(event,2)">
+          <select id="bg-library-2" class="small" aria-label="Saved backgrounds" onchange="applySavedBG(2,this.value)"><option value="">Saved BG</option></select>
+        </div>
+        <button class="small" id="eraser-btn-2" onclick="toggleEraser(2)" title="Manually erase unwanted AI background or foreground pixels">🧽 Eraser</button>
+        <div class="group" title="Manual eraser brush size"><label>Size:</label><input type="range" id="eraser-size-2" min="4" max="120" value="28" step="2" oninput="updateEraserCursor(2)"></div>
+      </div>
+      <div class="control-row control-row-4" role="toolbar" aria-label="Signature and refinement tools pane 2">
+        <button class="small" onclick="setMode(2,'sig')">✍️ Sign</button><button class="blue small" onclick="removeBackgroundAI(2)">✂️ Remove BG</button><button class="small" onclick="saveSignaturePNG(2)">✍️ Save PNG</button><div class="group"><label for="signature-color-2">Ink:</label><input type="color" id="signature-color-2" value="#123b9c" title="Signature ink color" aria-label="Signature ink color" onchange="setSignatureColor(2,this.value)" style="width:28px;height:26px;padding:1px;border:1px solid #64748b;border-radius:4px;background:none;cursor:pointer"></div><button class="small" onclick="copySignaturePNG(2)">📋 Copy</button>
+        <div class="group bg-refine"><label>Edge:</label><input type="range" id="bg-edge-2" min="0" max="100" value="55" step="1" oninput="if(state[2].foregroundImg) refineForeground(2)"></div>
+        <div class="group bg-refine"><label>Clean:</label><input type="range" id="bg-clean-2" min="0" max="100" value="25" step="1" oninput="if(state[2].foregroundImg) refineForeground(2)"></div>
+        <div class="group bg-refine"><label>Feather:</label><input type="range" id="bg-feather-2" min="0" max="100" value="35" step="1" oninput="if(state[2].foregroundImg) refineForeground(2)"></div>
+        <button class="small" onclick="enhanceImage(2)">🪄 Enh.Pic.</button>
+      </div>    </div>
+    <div class="canvas-area" id="box-2">
+      <div class="upload" id="drop-2"><strong>Drag & Drop Image Here</strong><br><span class="note">or click to select file</span></div>
+      <div class="canvas-container" id="container-2" style="display:none">
+        <canvas id="canvas-2"></canvas><div class="crop-frame" id="framebox-2"></div><div class="eraser-cursor" id="eraser-cursor-2"></div>
+        <svg class="polygon" id="svg-2"><polygon id="poly-2" points="" fill="#00e5ff26" stroke="#00e5ff" stroke-width="2" stroke-dasharray="5 3"/></svg>
+        <div class="pin" id="p2-0"></div><div class="pin" id="p2-1"></div><div class="pin" id="p2-2"></div><div class="pin" id="p2-3"></div>
+      </div>
+      <div class="status" id="status-2">Ready</div>
+      <div class="loading" id="loading-2"><div class="spinner"></div><span id="load-msg-2">Processing...</span></div>
+    </div>
+  </section>
+</div>
+
+<div id="printSettings" class="print-settings" aria-label="ID card print settings">
+  <div><strong>🪪 ID Card Print</strong><span class="note">Generic ID-card mode • Aadhaar, Voter, Ayushman, e-Shram, PAN, etc.</span></div>
+  <div class="print-setting-grid">
+    <label>Card type<select id="idCardType"><option>Aadhaar Card</option><option>Voter ID</option><option>Ayushman Card</option><option>e-Shram Card</option><option>PAN Card</option><option>Driving Licence</option><option>Other ID Card</option></select></label>
+    <label>Layout<select id="idCardLayout"><option value="frontback">Front + Back • 1 A4 Portrait</option><option value="front">Front Only • 1 A4 Portrait</option><option value="back">Back Only • 1 A4 Portrait</option></select></label>
+    <label>Gap (mm)<input id="idCardGap" type="number" min="0" max="50" step="1" value="8"></label>
+    <label>Front ↓ from top (mm)<input id="idCardFrontTop" type="number" min="0" max="100" step="1" value="25"></label>
+    <label>Back ↑ from bottom (mm)<input id="idCardBackBottom" type="number" min="0" max="100" step="1" value="50"></label>
+    <label>Copies<input id="idCardCopies" type="number" min="1" max="20" step="1" value="1"></label>
+  </div>
+
+  <div class="print-setting-grid photo-print-grid">
+    <label>Photo sheet<select id="photoSheetMode"><option value="5x5">Pane 1 × 5 • Row 1 + Pane 2 × 5 • Row 2</option><option value="5x0">Pane 1 × 5 only</option><option value="0x5">Pane 2 × 5 only</option></select></label>
+    <label>Photo width (mm)<input id="photoWidthMm" type="number" min="20" max="42" step="0.5" value="35"></label>
+    <label>Photo height (mm)<input id="photoHeightMm" type="number" min="25" max="60" step="0.5" value="45"></label>
+    <label>Row gap (mm)<input id="photoRowGapMm" type="number" min="0" max="30" step="1" value="8"></label>
+  </div>
+
+  <div class="note workspace-note">Tip: click a pane to make it active for Undo/Redo/History.</div>
+</div>
+<iframe id="printFrame" style="display:none"></iframe>
+
+<script>
+"use strict";
+
+/* v5.2 AUDIT REFACTOR: canonical export/print renderer; expanded crop workspace; print popup no longer depends on opener callbacks. */
+const MP_VISION_VERSION = '0.10.35';
+const MP_VISION_CDN = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VISION_VERSION}`;
+const MP_WASM_CDN = `${MP_VISION_CDN}/wasm`;
+const MP_MULTI_MODEL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite';
+const BG_KEY = 'docfix_saved_backgrounds_v33';
+
+let imageSegmenterPromise = null;
+let lastSegmentationMask = {1:null, 2:null};
+let activePane = 1;
+
+const state = {
+  1:{origImg:null,currentImg:null,foregroundImg:null,shadowImg:null,bgImage:null,corners:[],mode:"normal",pinsVisible:true,fillColor:"transparent",dragHandlers:[],history:[],redo:[],dragImage:false,moveHandlersInstalled:false,offsetX:0,offsetY:0,bgImage:null,shadowRemoved:false,eraserOn:false,eraserCanvas:null,eraserDrawing:false,eraserHandlersInstalled:false},
+  2:{origImg:null,currentImg:null,foregroundImg:null,shadowImg:null,bgImage:null,corners:[],mode:"normal",pinsVisible:true,fillColor:"transparent",dragHandlers:[],history:[],redo:[],dragImage:false,moveHandlersInstalled:false,offsetX:0,offsetY:0,bgImage:null,shadowRemoved:false,eraserOn:false,eraserCanvas:null,eraserDrawing:false,eraserHandlersInstalled:false}
+};
+
+const PRESETS = {
+  auto:null,
+  passport:{ratio:35/45,width:413,height:531,label:"Passport 35×45 mm @ 300 DPI"},
+  idcard:{ratio:85.6/54,width:1011,height:638,label:"ID Card 85.6×54 mm @ 300 DPI"},
+  square:{ratio:1,width:602,height:602,label:"Square 51×51 mm @ 300 DPI"},
+  a4:{ratio:210/297,width:2480,height:3508,label:"A4 @ 300 DPI"}
+};
+
+[1,2].forEach(id=>{
+  const pane=document.getElementById(`pane-${id}`);
+  pane.addEventListener('pointerdown',()=>activePane=id);
+  const box=document.getElementById(`box-${id}`);
+  box.addEventListener("dragover",e=>e.preventDefault());
+  box.addEventListener("drop",e=>{
+    e.preventDefault();
+    if(e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0],id);
+  });
+  document.getElementById(`drop-${id}`).addEventListener("click",()=>document.getElementById(`file-${id}`).click());
+  refreshBGLibrary(id);
+  setupEraser(id);
+});
+
+window.addEventListener('resize',()=>{fitPreviewToPane(1);fitPreviewToPane(2);});
+
+function setStatus(id,msg){document.getElementById(`status-${id}`).textContent=msg;}
+function loadFile(e,id){if(e.target.files?.[0])handleFile(e.target.files[0],id)}
+
+function handleFile(file,id){
+  if(!file.type.match(/^image\//)){
+    alert("Please select a valid image file.");
+    return;
+  }
+  const reader=new FileReader();
+  reader.onerror=()=>{
+    setStatus(id, "Error reading file.");
+    alert("Failed to read the selected file.");
+  };
+  reader.onload=evt=>{
+    const img=new Image();
+    img.onerror=()=>{
+      setStatus(id, "Error decoding image.");
+      alert("The selected file could not be decoded as an image.");
+    };
+    img.onload=()=>{
+      const s=state[id];
+      s.origImg=img;s.currentImg=img;s.foregroundImg=null;s.shadowImg=null;s.bgImage=null;s.fillColor="transparent";lastSegmentationMask[id]=null;s.mode="normal";document.getElementById(`container-${id}`)?.classList.remove('signature-transparent');s.history=[];s.redo=[];s.offsetX=0;s.offsetY=0;s.shadowRemoved=false;
+      document.getElementById(`drop-${id}`).style.display="none";
+      document.getElementById(`container-${id}`).style.display="inline-block";
+      document.getElementById(`btn-upload-${id}`).style.display="none";
+      document.getElementById(`btn-change-${id}`).style.display="inline-flex";
+      document.getElementById(`btn-delete-${id}`).style.display="inline-flex";
+      resetCrop(id);
+      fitPreviewToPane(id);
+      setStatus(id,`${img.naturalWidth} × ${img.naturalHeight}px • 4-corner mode`);
+    };
+    img.src=evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteImage(id){
+  const s=state[id];
+
+  // Deletion is a hard reset. Keeping old history here allowed Undo to
+  // resurrect an image that the user had explicitly cleared.
+  s.origImg=null;
+  s.currentImg=null;
+  s.foregroundImg=null;
+  s.shadowImg=null;
+  s.bgImage=null;
+  s.corners=[];
+  s.history=[];
+  s.redo=[];
+  s.fillColor="transparent";
+  s.mode="normal";
+  s.offsetX=0;
+  s.offsetY=0;
+  s.shadowRemoved=false;
+  s.dragImage=false;
+  s.eraserOn=false;
+  s.eraserCanvas=null;
+  s.eraserDrawing=false;
+  lastSegmentationMask[id]=null;
+
+  const container=document.getElementById(`container-${id}`);
+  container?.classList.remove('signature-transparent','eraser-mode','crop-only','drag-image');
+  document.getElementById(`eraser-btn-${id}`)?.classList.remove('eraser-on');
+
+  const frame=document.querySelector(`#container-${id} .crop-frame`);
+  if(frame)frame.classList.remove('active');
+
+  const c=document.getElementById(`canvas-${id}`);
+  if(c){
+    c.width=1;c.height=1;
+    c.getContext("2d")?.clearRect(0,0,1,1);
+  }
+
+  if(container)container.style.display="none";
+  document.getElementById(`drop-${id}`).style.display="block";
+  document.getElementById(`btn-upload-${id}`).style.display="inline-flex";
+  document.getElementById(`btn-change-${id}`).style.display="none";
+  document.getElementById(`btn-delete-${id}`).style.display="none";
+  document.getElementById(`file-${id}`).value="";
+  setStatus(id,"Ready");
+}
+
+function rotateImage(id,deg){
+  const s=state[id];
+  if(!s.currentImg)return;
+
+  // Preserve a real undo state. The old implementation called resetCrop()
+  // after pushHistory(), and resetCrop() cleared the history stack.
+  const previous=snapshot(id);
+  const src=s.currentImg;
+  const c=document.createElement("canvas");
+  const ctx=c.getContext("2d");
+  c.width=Math.abs(src.height);
+  c.height=Math.abs(src.width);
+  ctx.translate(c.width/2,c.height/2);
+  ctx.rotate(deg*Math.PI/180);
+  ctx.drawImage(src,-src.width/2,-src.height/2);
+
+  const img=new Image();
+  img.onload=()=>{
+    s.currentImg=img;
+    s.origImg=img;
+    s.foregroundImg=null;
+    s.shadowImg=null;
+    s.bgImage=null;
+    s.offsetX=0;
+    s.offsetY=0;
+    s.shadowRemoved=false;
+    s.eraserOn=false;
+    s.eraserCanvas=null;
+    lastSegmentationMask[id]=null;
+
+    document.getElementById(`fine-angle-${id}`).value=0;
+    document.getElementById(`shadow-${id}`).value=0;
+    document.getElementById(`contrast-${id}`).value=100;
+    document.getElementById(`bright-${id}`).value=100;
+    s.mode="normal";
+    s.fillColor="transparent";
+
+    const canvas=document.getElementById(`canvas-${id}`);
+    canvas.width=img.naturalWidth||img.width;
+    canvas.height=img.naturalHeight||img.height;
+
+    s.history.push(previous);
+    if(s.history.length>15)s.history.shift();
+    s.redo=[];
+
+    fitPreviewToPane(id);
+    processImage(id);
+    setPinsVisibility(id,true);
+
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      const cr=canvas.getBoundingClientRect();
+      const br=document.getElementById(`container-${id}`).getBoundingClientRect();
+      const margin=.04;
+      const ox=cr.left-br.left,oy=cr.top-br.top,w=cr.width,h=cr.height;
+      s.corners=[
+        {x:ox+w*margin,y:oy+h*margin},
+        {x:ox+w*(1-margin),y:oy+h*margin},
+        {x:ox+w*(1-margin),y:oy+h*(1-margin)},
+        {x:ox+w*margin,y:oy+h*(1-margin)}
+      ];
+      updatePinsUI(id);
+      setupDragEvents(id);
+    }));
+    setStatus(id,`Rotated ${deg>0?'right':'left'} 90°`);
+  };
+  img.onerror=()=>{
+    setStatus(id,'Rotation failed');
+    alert('Could not rotate the image.');
+  };
+  img.src=c.toDataURL("image/png");
+}
+
+function setMode(id,mode){
+  const s=state[id];s.mode=mode;
+  if(mode==="doc"){
+    document.getElementById(`shadow-${id}`).value=60;
+    document.getElementById(`contrast-${id}`).value=140;
+    document.getElementById(`bright-${id}`).value=110;
+  }else if(mode==="sig"){
+    document.getElementById(`shadow-${id}`).value=0;
+    document.getElementById(`contrast-${id}`).value=180;
+    document.getElementById(`bright-${id}`).value=100;
+  }
+  processImage(id);
+}
+
+function resetCrop(id){
+  const s=state[id];if(!s.origImg)return;
+  document.getElementById(`fine-angle-${id}`).value=0;
+  document.getElementById(`shadow-${id}`).value=0;
+  document.getElementById(`contrast-${id}`).value=100;
+  document.getElementById(`bright-${id}`).value=100;
+  s.mode="normal";s.fillColor="transparent";s.currentImg=s.origImg;s.eraserOn=false;s.eraserCanvas=null;lastSegmentationMask[id]=null;document.getElementById(`container-${id}`).classList.remove('crop-only','signature-transparent','eraser-mode');document.getElementById(`eraser-btn-${id}`)?.classList.remove('eraser-on');s.foregroundImg=null;s.shadowImg=null;s.bgImage=null;s.offsetX=0;s.offsetY=0;s.shadowRemoved=false;s.history=[];s.redo=[];
+  const c=document.getElementById(`canvas-${id}`);c.width=s.currentImg.naturalWidth||s.currentImg.width;c.height=s.currentImg.naturalHeight||s.currentImg.height;
+  fitPreviewToPane(id);
+  processImage(id);
+  setPinsVisibility(id,true);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const canvas=document.getElementById(`canvas-${id}`),box=document.getElementById(`container-${id}`);
+    const cr=canvas.getBoundingClientRect(),br=box.getBoundingClientRect(),margin=.04;
+    const ox=cr.left-br.left,oy=cr.top-br.top,w=cr.width,h=cr.height;
+    s.corners=[{x:ox+w*margin,y:oy+h*margin},{x:ox+w*(1-margin),y:oy+h*margin},{x:ox+w*(1-margin),y:oy+h*(1-margin)},{x:ox+w*margin,y:oy+h*(1-margin)}];
+    updatePinsUI(id);setupDragEvents(id);
+  }));
+}
+
+function autoCorners(id){
+  const s=state[id];if(!s.currentImg)return;
+  pushHistory(id);
+  const canvas=document.getElementById(`canvas-${id}`),box=document.getElementById(`container-${id}`);
+  const cr=canvas.getBoundingClientRect(),br=box.getBoundingClientRect(),m=.025;
+  const ox=cr.left-br.left,oy=cr.top-br.top,w=cr.width,h=cr.height;
+  s.corners=[{x:ox+w*m,y:oy+h*m},{x:ox+w*(1-m),y:oy+h*m},{x:ox+w*(1-m),y:oy+h*(1-m)},{x:ox+w*m,y:oy+h*(1-m)}];
+  updatePinsUI(id);setPinsVisibility(id,true);
+  setStatus(id,"Auto 4 corners set • drag the large cyan handles to the document edges");
+}
+
+function applyPresetPreview(id){
+  const key=document.getElementById(`preset-${id}`).value;
+  if(key==="auto"){setStatus(id,"Output: original selected-corner ratio");return}
+  const p=PRESETS[key];
+  setStatus(id,`Output preset: ${p.label} • 4 corners will be adjusted to this ratio`);
+}
+
+function setPinsVisibility(id,visible){
+  const s=state[id];s.pinsVisible=visible;
+  document.getElementById(`svg-${id}`).style.display=visible?"block":"none";
+  for(let i=0;i<4;i++)document.getElementById(`p${id}-${i}`).style.display=visible?"block":"none";
+}
+function togglePins(id){setPinsVisibility(id,!state[id].pinsVisible)}
+
+function updatePinsUI(id){
+  const c=state[id].corners;if(c.length!==4)return;
+  document.getElementById(`poly-${id}`).setAttribute("points",c.map(p=>`${p.x},${p.y}`).join(" "));
+  c.forEach((p,i)=>{const pin=document.getElementById(`p${id}-${i}`);pin.style.left=`${p.x}px`;pin.style.top=`${p.y}px`});
+}
+
+function setupDragEvents(id){
+  const box=document.getElementById(`container-${id}`),s=state[id];
+  box.style.touchAction='none';
+  s.dragHandlers.forEach(h=>{
+    window.removeEventListener('pointermove',h.move);
+    window.removeEventListener('pointerup',h.up);
+    window.removeEventListener('pointercancel',h.cancel);
+  });
+  s.dragHandlers=[];
+  for(let idx=0;idx<4;idx++){
+    const pin=document.getElementById(`p${id}-${idx}`);
+    let dragging=false;
+    const down=e=>{
+      e.preventDefault();e.stopPropagation();
+      pushHistory(id);dragging=true;
+      pin.setPointerCapture?.(e.pointerId);
+      document.body.style.userSelect='none';
+    };
+    const move=e=>{
+      if(!dragging)return;
+      const r=box.getBoundingClientRect();
+      const x=Math.max(-90,Math.min(e.clientX-r.left,r.width+90));
+      const y=Math.max(-90,Math.min(e.clientY-r.top,r.height+90));
+      s.corners[idx]={x,y};updatePinsUI(id);
+    };
+    const up=e=>{
+      if(!dragging)return;
+      dragging=false;document.body.style.userSelect='';
+      try{pin.releasePointerCapture?.(e.pointerId)}catch(_){}
+    };
+    const cancel=e=>{
+      if(!dragging)return;
+      dragging=false;document.body.style.userSelect='';
+      try{pin.releasePointerCapture?.(e.pointerId)}catch(_){}
+    };
+    pin.onpointerdown=down;
+    window.addEventListener('pointermove',move,{passive:false});
+    window.addEventListener('pointerup',up,{passive:false});
+    window.addEventListener('pointercancel',cancel,{passive:false});
+    s.dragHandlers.push({move,up,cancel});
+  }
+}
+
+function showLoading(id,msg){document.getElementById(`load-msg-${id}`).textContent=msg;document.getElementById(`loading-${id}`).style.display="flex"}
+function hideLoading(id){document.getElementById(`loading-${id}`).style.display="none"}
+
+function getSavedBGs(){try{return JSON.parse(localStorage.getItem(BG_KEY)||'[]')}catch(e){return[]}}
+function saveBGList(list){try{localStorage.setItem(BG_KEY,JSON.stringify(list.slice(0,10)))}catch(e){console.error("Storage write failed",e);}}
+function refreshBGLibrary(id){
+  const sel=document.getElementById(`bg-library-${id}`); if(!sel)return;
+  const list=getSavedBGs(); sel.innerHTML='<option value="">Saved</option>';
+  list.forEach((x,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=x.name||`Color ${i+1}`;sel.appendChild(o)});
+}
+function saveBGColor(id){
+  const color=state[id].fillColor;
+  if(!color||color==='transparent')return setStatus(id,'Select a color first');
+  const list=getSavedBGs(); const same=list.findIndex(x=>x.type==='color'&&x.value===color);
+  if(same>=0){setStatus(id,'This BG color is already saved');return}
+  list.unshift({type:'color',value:color,name:color});
+  saveBGList(list); refreshBGLibrary(id); setStatus(id,'BG color saved');
+}
+function applySavedBG(id,value){
+  if(value==='')return;
+  const item=getSavedBGs()[Number(value)]; if(!item)return;
+  if(item.type==='color'){pushHistory(id);state[id].fillColor=item.value;state[id].bgImage=null;processImage(id);setStatus(id,`Saved applied • ${item.value}`)}
+}
+function chooseBGImage(id){document.getElementById(`bg-file-${id}`).click()}
+function loadBGImage(e,id){const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>loadBGImageDataURL(id,r.result);r.readAsDataURL(f)}
+function loadBGImageDataURL(id,url){
+  const img=new Image(); img.onload=()=>{pushHistory(id);state[id].bgImage=img;state[id].fillColor='transparent';processImage(id);setStatus(id,'Background image applied')}; img.src=url;
+}
+function updateFrame(id){
+  const v=document.getElementById(`frame-${id}`).value;
+  const c=document.getElementById(`frame-color-${id}`)?.value || '#00e5ff';
+  const frame=document.querySelector(`#container-${id} .crop-frame`);
+  if(frame){
+    frame.style.borderWidth=v+'px';
+    frame.style.borderColor=c;
+    frame.classList.add('active');
+  }
+  const poly=document.getElementById(`poly-${id}`);
+  if(poly)poly.setAttribute('stroke',c);
+  setStatus(id,`Frame ${v}px • ${c}`);
+}
+function toggleFrame(id){
+  const frame=document.querySelector(`#container-${id} .crop-frame`);
+  if(!frame)return;
+  const on=!frame.classList.contains('active');
+  frame.classList.toggle('active',on);
+  if(on)updateFrame(id);
+  else setStatus(id,'Frame OFF');
+}
+function imageToDataURL(img){
+  if(!img)return null;
+  try{
+    const c=document.createElement('canvas');c.width=img.naturalWidth||img.width;c.height=img.naturalHeight||img.height;
+    c.getContext('2d').drawImage(img,0,0);return c.toDataURL('image/png');
+  }catch(e){return null;}
+}
+
+function snapshot(id){
+  const s=state[id];
+  return {
+    current:imageToDataURL(s.currentImg),
+    orig:imageToDataURL(s.origImg),
+    foreground:imageToDataURL(s.foregroundImg),
+    shadow:imageToDataURL(s.shadowImg),
+    bg:imageToDataURL(s.bgImage),
+    corners:s.corners.map(p=>({...p})),
+    fillColor:s.fillColor,
+    offsetX:s.offsetX,
+    offsetY:s.offsetY,
+    mode:s.mode,
+    shadowRemoved:!!s.shadowRemoved,
+    cropOnly:document.getElementById(`container-${id}`).classList.contains('crop-only'),
+    preset:document.getElementById(`preset-${id}`)?.value||'auto',
+    bright:document.getElementById(`bright-${id}`)?.value||100,
+    contrast:document.getElementById(`contrast-${id}`)?.value||100,
+    shadowVal:document.getElementById(`shadow-${id}`)?.value||0,
+    shadowFix:document.getElementById(`shadowfix-${id}`)?.value||55,
+    shadowDetail:document.getElementById(`shadowdetail-${id}`)?.value||55,
+    fineAngle:document.getElementById(`fine-angle-${id}`)?.value||0,
+    frameVal:document.getElementById(`frame-${id}`)?.value||3,
+    frameColor:document.getElementById(`frame-color-${id}`)?.value||'#00e5ff',
+    frameActive:document.querySelector(`#container-${id} .crop-frame`)?.classList.contains('active')||false
+  };
+}
+
+function dataURLToImage(url){
+  return new Promise((resolve,reject)=>{
+    if(!url)return resolve(null);const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;
+  });
+}
+
+async function restoreSnapshot(id,snap){
+  const s=state[id];
+  try{
+    const [cur,orig,fg,shadow,bg]=await Promise.all([
+      dataURLToImage(snap.current),dataURLToImage(snap.orig),dataURLToImage(snap.foreground),dataURLToImage(snap.shadow),dataURLToImage(snap.bg)
+    ]);
+    s.currentImg=cur;s.origImg=orig||cur;s.foregroundImg=fg;s.shadowImg=shadow;s.bgImage=bg;
+    s.corners=(snap.corners||[]).map(p=>({...p}));s.fillColor=snap.fillColor||'transparent';
+    s.offsetX=snap.offsetX||0;s.offsetY=snap.offsetY||0;s.mode=snap.mode||'normal';s.shadowRemoved=!!snap.shadowRemoved;
+    
+    const preset=document.getElementById(`preset-${id}`);if(preset)preset.value=snap.preset||'auto';
+    const bright=document.getElementById(`bright-${id}`);if(bright)bright.value=snap.bright;
+    const contrast=document.getElementById(`contrast-${id}`);if(contrast)contrast.value=snap.contrast;
+    const shadowCtl=document.getElementById(`shadow-${id}`);if(shadowCtl)shadowCtl.value=snap.shadowVal;
+    const shadowFix=document.getElementById(`shadowfix-${id}`);if(shadowFix)shadowFix.value=snap.shadowFix;
+    const shadowDetail=document.getElementById(`shadowdetail-${id}`);if(shadowDetail)shadowDetail.value=snap.shadowDetail;
+    const fineAngle=document.getElementById(`fine-angle-${id}`);if(fineAngle)fineAngle.value=snap.fineAngle;
+    const frameCtl=document.getElementById(`frame-${id}`);if(frameCtl)frameCtl.value=snap.frameVal;
+    const frameColor=document.getElementById(`frame-color-${id}`);if(frameColor)frameColor.value=snap.frameColor;
+
+    const frame=document.querySelector(`#container-${id} .crop-frame`);
+    if(frame){
+      frame.classList.toggle('active',!!snap.frameActive);
+      frame.style.borderWidth=(Number(snap.frameVal)||3)+'px';
+      frame.style.borderColor=snap.frameColor||'#00e5ff';
+    }
+
+    const canvas=document.getElementById(`canvas-${id}`);
+    if(s.currentImg){canvas.width=s.currentImg.naturalWidth||s.currentImg.width;canvas.height=s.currentImg.naturalHeight||s.currentImg.height;}
+    document.getElementById(`container-${id}`).classList.toggle('crop-only',!!snap.cropOnly);
+    fitPreviewToPane(id);
+    processImage(id);updatePinsUI(id);setupDragEvents(id);setPinsVisibility(id,!snap.cropOnly);
+  }catch(err){console.error('History restore failed',err);setStatus(id,'History restore failed');}
+}
+
+function pushHistory(id){
+  const s=state[id];
+  s.history.push(snapshot(id));
+  if(s.history.length>15)s.history.shift();
+  s.redo=[];
+}
+async function undoAction(id){
+  const s=state[id];if(!s.history.length){setStatus(id,'Nothing to undo');return;}
+  const previous=s.history.pop();s.redo.push(snapshot(id));await restoreSnapshot(id,previous);setStatus(id,'Undo applied');
+}
+async function redoAction(id){
+  const s=state[id];if(!s.redo.length){setStatus(id,'Nothing to redo');return;}
+  const next=s.redo.pop();s.history.push(snapshot(id));await restoreSnapshot(id,next);setStatus(id,'Redo applied');
+}
+
+
+function showHistoryInfo(id){
+  const s=state[id];
+  const undo=s.history?.length||0, redo=s.redo?.length||0;
+  setStatus(id,`History: ${undo} undo state${undo===1?'':'s'} • ${redo} redo state${redo===1?'':'s'} • Undo restores erased pixels`);
+  alert(`Pane ${id} History\n\nUndo states: ${undo}\nRedo states: ${redo}\n\nUse Undo to recover pixels removed by the manual Eraser. Redo reapplies the change.`);
+}
+
+function toggleEraser(id){
+  const s=state[id];
+  if(!s.foregroundImg){
+    setStatus(id,'Run Remove BG first, then use Eraser on unwanted remaining pixels');
+    return;
+  }
+  s.eraserOn=!s.eraserOn;
+  const btn=document.getElementById(`eraser-btn-${id}`);
+  btn?.classList.toggle('eraser-on',s.eraserOn);
+  document.getElementById(`container-${id}`)?.classList.toggle('eraser-mode',s.eraserOn);
+  if(!s.eraserOn){
+    s.eraserDrawing=false;
+    s.eraserCanvas=null;
+    const cur=document.getElementById(`eraser-cursor-${id}`); if(cur)cur.style.display='none';
+  }
+  setStatus(id,s.eraserOn?'Eraser ON • drag over unwanted pixels • Undo restores them':'Eraser OFF');
+}
+
+function getEraserBrushSize(id){
+  return Math.max(4,Number(document.getElementById(`eraser-size-${id}`)?.value||28));
+}
+
+function canvasPointForClient(id,e){
+  const canvas=document.getElementById(`canvas-${id}`),r=canvas.getBoundingClientRect();
+  const sx=canvas.width/Math.max(1,r.width),sy=canvas.height/Math.max(1,r.height);
+  return {x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy,sx,sy,r};
+}
+
+function sourcePointFromCanvasPoint(id,x,y){
+  const s=state[id],canvas=document.getElementById(`canvas-${id}`),w=canvas.width,h=canvas.height;
+  const angle=(Number(document.getElementById(`fine-angle-${id}`)?.value||0))*Math.PI/180;
+  const dx=x-w/2-s.offsetX,dy=y-h/2-s.offsetY;
+  const cos=Math.cos(angle),sin=Math.sin(angle);
+  return {x:dx*cos+dy*sin+w/2,y:-dx*sin+dy*cos+h/2};
+}
+
+function eraseAt(id,x,y){
+  const s=state[id],c=s.eraserCanvas;
+  if(!c)return;
+  const p=sourcePointFromCanvasPoint(id,x,y),r=getEraserBrushSize(id);
+  const ctx=c.getContext('2d');
+  ctx.save();
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath();ctx.arc(p.x,p.y,r/2,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  s.foregroundImg=c;
+  processImage(id);
+}
+
+function updateEraserCursor(id,e){
+  const cur=document.getElementById(`eraser-cursor-${id}`),canvas=document.getElementById(`canvas-${id}`);
+  if(!cur||!canvas||!state[id].eraserOn)return;
+  const r=canvas.getBoundingClientRect();
+  cur.style.left=(e.clientX-r.left)+'px';cur.style.top=(e.clientY-r.top)+'px';
+  const cssRadius=getEraserBrushSize(id)*(r.width/Math.max(1,canvas.width));
+  cur.style.width=Math.max(4,cssRadius)+'px';cur.style.height=Math.max(4,cssRadius)+'px';cur.style.display='block';
+}
+
+function setupEraser(id){
+  const box=document.getElementById(`container-${id}`),canvas=document.getElementById(`canvas-${id}`),s=state[id];
+  if(!box||!canvas||s.eraserHandlersInstalled)return;
+  const move=e=>{
+    if(!s.eraserOn)return;
+    updateEraserCursor(id,e);
+    if(s.eraserDrawing){e.preventDefault();const p=canvasPointForClient(id,e);eraseAt(id,p.x,p.y);}
+  };
+  const down=e=>{
+    if(!s.eraserOn || !s.foregroundImg || e.target.closest('.pin'))return;
+    e.preventDefault();e.stopPropagation();
+    pushHistory(id);
+    const w=canvas.width,h=canvas.height;
+    const work=document.createElement('canvas');work.width=w;work.height=h;
+    work.getContext('2d').drawImage(s.foregroundImg,0,0,w,h);
+    s.eraserCanvas=work;s.eraserDrawing=true;
+    try{box.setPointerCapture?.(e.pointerId)}catch(_){ }
+    const p=canvasPointForClient(id,e);eraseAt(id,p.x,p.y);updateEraserCursor(id,e);
+  };
+  const up=e=>{
+    if(!s.eraserDrawing)return;
+    s.eraserDrawing=false;
+    try{box.releasePointerCapture?.(e.pointerId)}catch(_){ }
+    if(s.eraserCanvas){
+      const url=s.eraserCanvas.toDataURL('image/png');
+      const out=new Image();
+      out.onload=()=>{s.foregroundImg=out;s.eraserCanvas=null;processImage(id);setStatus(id,'Manual erase applied • Undo can restore it');};
+      out.src=url;
+    }
+  };
+  box.addEventListener('pointermove',move,{passive:false});
+  box.addEventListener('pointerdown',down,{passive:false});
+  box.addEventListener('pointerup',up,{passive:false});
+  box.addEventListener('pointercancel',up,{passive:false});
+  box.addEventListener('pointerleave',()=>{const cur=document.getElementById(`eraser-cursor-${id}`);if(cur)cur.style.display='none';});
+  box.addEventListener('pointerenter',e=>{if(s.eraserOn)updateEraserCursor(id,e);});
+  s.eraserHandlersInstalled=true;
+}
+
+function toggleImageDrag(id){
+  const s=state[id];s.dragImage=!s.dragImage;
+  const box=document.getElementById(`container-${id}`);
+  box.classList.toggle('drag-image',s.dragImage);
+  if(!s.moveHandlersInstalled){
+    let moving=false,lastX=0,lastY=0;
+    box.addEventListener('pointerdown',e=>{
+      if(!s.dragImage || e.target.closest('.pin'))return;
+      e.preventDefault();moving=true;lastX=e.clientX;lastY=e.clientY;
+      box.setPointerCapture?.(e.pointerId);
+    });
+    box.addEventListener('pointermove',e=>{
+      if(!moving || !s.dragImage)return;
+      const canvas=document.getElementById(`canvas-${id}`);
+      const r=canvas.getBoundingClientRect();
+      const sx=canvas.width/Math.max(1,r.width),sy=canvas.height/Math.max(1,r.height);
+      s.offsetX+=(e.clientX-lastX)*sx;s.offsetY+=(e.clientY-lastY)*sy;
+      lastX=e.clientX;lastY=e.clientY;processImage(id);
+    });
+    const stop=()=>{if(moving){pushHistory(id);} moving=false;};
+    box.addEventListener('pointerup',stop);box.addEventListener('pointercancel',stop);
+    s.moveHandlersInstalled=true;
+  }
+  setStatus(id,s.dragImage?'Move Image ON — drag the image':'Move Image OFF');
+}
+
+function removeShadow(id){
+  const s=state[id];if(!s.currentImg)return;
+  pushHistory(id);s.shadowRemoved=true;
+  document.getElementById(`shadowfix-${id}`).value=65;
+  applyShadowFix(id);
+}
+
+function applyShadowFix(id){
+  const s=state[id];if(!s.currentImg)return;
+  const strength=Number(document.getElementById(`shadowfix-${id}`).value||55)/100;
+  const detail=Number(document.getElementById(`shadowdetail-${id}`)?.value||55)/100;
+  const src=s.foregroundImg||s.currentImg,w=src.naturalWidth||src.width,h=src.naturalHeight||src.height;
+  const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(src,0,0,w,h);
+  const im=ctx.getImageData(0,0,w,h),d=im.data;
+  const target=215;
+  for(let i=0;i<d.length;i+=4){
+    const lum=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+    if(lum<target){
+      const deficit=(target-lum)/target;
+      const lift=Math.min(.82, deficit*(0.75+strength*0.55)*(0.75+detail*0.35));
+      const factor=1+lift;
+      d[i]=Math.min(255,Math.round(d[i]*factor));
+      d[i+1]=Math.min(255,Math.round(d[i+1]*factor));
+      d[i+2]=Math.min(255,Math.round(d[i+2]*factor));
+    }
+  }
+  ctx.putImageData(im,0,0);const out=new Image();out.onload=()=>{s.shadowImg=out;processImage(id);setStatus(id,'Shadow refined')};out.src=c.toDataURL('image/png');
+}
+
+function fitPreviewToPane(id){
+  const box=document.getElementById(`box-${id}`);
+  const container=document.getElementById(`container-${id}`);
+  const canvas=document.getElementById(`canvas-${id}`);
+  if(!box||!container||!canvas||!canvas.width||!canvas.height)return;
+  const oldW=container.getBoundingClientRect().width,oldH=container.getBoundingClientRect().height;
+  const cs=getComputedStyle(box);
+  const padX=parseFloat(cs.paddingLeft||0)+parseFloat(cs.paddingRight||0)+16;
+  const padY=parseFloat(cs.paddingTop||0)+parseFloat(cs.paddingBottom||0)+16;
+  const maxW=Math.max(80,box.clientWidth-padX);
+  const maxH=Math.max(80,box.clientHeight-padY);
+  const scale=Math.min(1,maxW/canvas.width,maxH/canvas.height);
+  const w=Math.max(1,Math.round(canvas.width*scale));
+  const h=Math.max(1,Math.round(canvas.height*scale));
+  canvas.style.width=w+'px';
+  canvas.style.height=h+'px';
+  container.style.width=w+'px';
+  container.style.height=h+'px';
+  container.style.margin='0 auto';
+  if(oldW>0&&oldH>0&&state[id]?.corners?.length===4){
+    const kx=w/oldW,ky=h/oldH;
+    state[id].corners=state[id].corners.map(p=>({x:p.x*kx,y:p.y*ky}));
+    updatePinsUI(id);
+  }
+}
+
+async function getImageSegmenter(){
+  if(imageSegmenterPromise) return imageSegmenterPromise;
+  imageSegmenterPromise=(async()=>{
+    const mod=await import(`${MP_VISION_CDN}/vision_bundle.mjs`);
+    if(!mod.FilesetResolver || !mod.ImageSegmenter){
+      throw new Error('MediaPipe Tasks Vision ImageSegmenter is unavailable.');
+    }
+    const fileset=await mod.FilesetResolver.forVisionTasks(MP_WASM_CDN);
+    return await mod.ImageSegmenter.createFromOptions(fileset,{
+      baseOptions:{modelAssetPath:MP_MULTI_MODEL,delegate:'CPU'},
+      runningMode:'IMAGE',
+      outputCategoryMask:false,
+      outputConfidenceMasks:true
+    });
+  })().catch(err=>{imageSegmenterPromise=null;throw err;});
+  return imageSegmenterPromise;
+}
+
+function clamp01(v){return Math.max(0,Math.min(1,v));}
+function smoothstep(a,b,x){
+  x=clamp01((x-a)/(b-a));
+  return x*x*(3-2*x);
+}
+
+function buildBaseMultiMask(result){
+  const masks=result.confidenceMasks||[];
+  if(masks.length<6) throw new Error('Multi-class model returned an incomplete confidence mask.');
+  const mw=masks[0].width, mh=masks[0].height;
+  const channels=masks.map(m=>m.getAsFloat32Array());
+  const alpha=new Float32Array(mw*mh);
+  let category=null;
+  try{ category=result.categoryMask?.getAsUint8Array?.()||null; }catch(e){ category=null; }
+
+  for(let i=0;i<alpha.length;i++){
+    let person=0, bestClass=0, best=channels[0]?.[i]||0;
+    for(let c=1;c<=5;c++){
+      const q=channels[c]?.[i]||0;
+      person=Math.max(person,q);
+      if(q>best){best=q;bestClass=c;}
+    }
+    if(category && category[i]!==undefined) bestClass=category[i];
+    let a=smoothstep(0.16,0.52,person);
+    if(bestClass===0) a*=0.08; else a=Math.max(a,0.35);
+    alpha[i]=clamp01(a);
+  }
+  return {alpha,mw,mh};
+}
+
+function buildRefinedMask(base,edge,clean,feather=35){
+  const alpha=new Float32Array(base.alpha),mw=base.mw,mh=base.mh;
+  const keep=0.72+(edge/100)*0.28;
+  const featherPx=0.018+(feather/100)*0.085;
+  const threshold=0.16-(edge/100)*0.075;
+
+  for(let i=0;i<alpha.length;i++){
+    let a=clamp01(alpha[i]*keep);
+    a=smoothstep(threshold,Math.min(.97,threshold+featherPx),a);
+    alpha[i]=a;
+  }
+
+  const radius=clean<20?0:clean<55?1:2;
+  if(radius){
+    const src=alpha.slice();
+    const r2=radius*radius;
+    for(let y=radius;y<mh-radius;y++){
+      for(let x=radius;x<mw-radius;x++){
+        const idx=y*mw+x, a=src[idx];
+        if(a<0.08) continue;
+        let neighbors=0, total=0;
+        for(let yy=-radius;yy<=radius;yy++){
+          for(let xx=-radius;xx<=radius;xx++){
+            if(xx*xx+yy*yy>r2) continue;
+            total++;
+            if(src[(y+yy)*mw+(x+xx)]>0.18) neighbors++;
+          }
+        }
+        const ratio=neighbors/Math.max(1,total);
+        if(a<0.45 && ratio<(0.22+(clean/100)*0.18)) alpha[idx]=0;
+        else if(a<0.85 && ratio<0.35) alpha[idx]*=0.72;
+      }
+    }
+  }
+
+  return {alpha,mw,mh,edge};
+}
+
+function maskToCanvas(mask,w,h){
+  const c=document.createElement('canvas');c.width=mask.mw;c.height=mask.mh;const ctx=c.getContext('2d');const id=ctx.createImageData(mask.mw,mask.mh);
+  for(let i=0,p=0;i<mask.alpha.length;i++,p+=4){const a=Math.round(mask.alpha[i]*255);id.data[p]=255;id.data[p+1]=255;id.data[p+2]=255;id.data[p+3]=a}ctx.putImageData(id,0,0);
+  const full=document.createElement('canvas');full.width=w;full.height=h;const fctx=full.getContext('2d',{willReadFrequently:true});fctx.imageSmoothingEnabled=true;fctx.imageSmoothingQuality='high';fctx.drawImage(c,0,0,w,h);return fctx.getImageData(0,0,w,h).data;
+}
+
+function applyAlphaToSource(source,mask,edge){
+  const w=source.naturalWidth||source.width,h=source.naturalHeight||source.height,c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,w,h);const fg=ctx.getImageData(0,0,w,h),md=maskToCanvas(mask,w,h);
+  const softness=0.018+(edge/100)*0.055,threshold=0.20-(edge/100)*0.08;
+  for(let i=0;i<fg.data.length;i+=4){const v=md[i]/255;fg.data[i+3]=Math.round(fg.data[i+3]*smoothstep(threshold,Math.min(.98,threshold+softness),v))}
+  ctx.putImageData(fg,0,0);return c.toDataURL('image/png');
+}
+
+function refineForeground(id){
+  const s=state[id],cached=lastSegmentationMask[id];if(!s.currentImg||!cached)return;
+  const edge=Number(document.getElementById(`bg-edge-${id}`)?.value||55),clean=Number(document.getElementById(`bg-clean-${id}`)?.value||25),feather=Number(document.getElementById(`bg-feather-${id}`)?.value||35);
+  const refined=buildRefinedMask(cached,edge,clean,feather),url=applyAlphaToSource(cached.source,refined,edge),out=new Image();out.onload=()=>{s.foregroundImg=out;processImage(id);setStatus(id,`BG refined`)};out.src=url;
+}
+
+function removeSignatureBackground(id){
+  const s=state[id];
+  if(!s.currentImg)return;
+
+  showLoading(id,'Removing signature background...');
+  setStatus(id,'Removing signature background...');
+
+  try{
+    const src=s.currentImg;
+    const w=src.naturalWidth||src.width, h=src.naturalHeight||src.height;
+    const c=document.createElement('canvas');
+    c.width=w; c.height=h;
+    const ctx=c.getContext('2d',{willReadFrequently:true});
+    ctx.clearRect(0,0,w,h);
+    ctx.drawImage(src,0,0,w,h);
+
+    const im=ctx.getImageData(0,0,w,h);
+    const d=im.data;
+
+    // Robust paper estimate: use corner pixels and the median of each channel.
+    // This works better than an average when the paper contains faint marks.
+    const samples=[];
+    const mx=Math.max(2,Math.floor(w*.10));
+    const my=Math.max(2,Math.floor(h*.10));
+    const step=Math.max(1,Math.floor(Math.min(w,h)/220));
+    for(let y=0;y<h;y+=step){
+      for(let x=0;x<w;x+=step){
+        if((x<mx||x>=w-mx)&&(y<my||y>=h-my)){
+          const i=(y*w+x)*4;
+          samples.push([d[i],d[i+1],d[i+2]]);
+        }
+      }
+    }
+    const median=v=>{
+      if(!v.length)return 255;
+      v=v.slice().sort((a,b)=>a-b);
+      return v[Math.floor(v.length/2)];
+    };
+    const bg=[
+      median(samples.map(p=>p[0])),
+      median(samples.map(p=>p[1])),
+      median(samples.map(p=>p[2]))
+    ];
+
+    const edge=Number(document.getElementById(`bg-edge-${id}`)?.value||55);
+    const clean=Number(document.getElementById(`bg-clean-${id}`)?.value||25);
+    const feather=Number(document.getElementById(`bg-feather-${id}`)?.value||35);
+
+    // Controls are intentionally tuned for handwritten signatures:
+    // Edge = how aggressively paper is removed, Clean = dark-ink protection,
+    // Feather = anti-aliased edge softness.
+    const paperCut=24 + (100-edge)*0.42;
+    const soft=Math.max(8,14 + feather*0.28);
+    const inkCut=Math.max(70,145 - clean*0.55);
+
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i],g=d[i+1],b=d[i+2];
+      const lum=.299*r+.587*g+.114*b;
+      const dist=Math.hypot(r-bg[0],g-bg[1],b-bg[2]);
+      const chroma=Math.max(r,g,b)-Math.min(r,g,b);
+
+      // Strong dark/colored ink is always retained. This protects blue/black
+      // pen strokes even when the paper is slightly tinted.
+      const darkInk=clamp01((inkCut-lum)/Math.max(1,inkCut-55));
+      const colorInk=clamp01((chroma-10)/55) * clamp01((235-lum)/100);
+      const ink=Math.max(darkInk,colorInk*.82);
+
+      // Pixels close to the paper color are transparent. The soft band keeps
+      // anti-aliased pen edges instead of producing jagged cut-outs.
+      let a;
+      if(dist<=paperCut) a=0;
+      else a=clamp01((dist-paperCut)/soft);
+
+      // Preserve actual ink above the paper-distance test.
+      a=Math.max(a,ink);
+
+      // Very bright paper/highlights remain transparent unless they are clearly
+      // separated from the sampled paper color.
+      if(lum>246 && dist<90) a=0;
+      d[i+3]=Math.round(255*clamp01(a));
+    }
+
+    ctx.putImageData(im,0,0);
+
+    const url=c.toDataURL('image/png');
+    const out=new Image();
+    out.onload=()=>{
+      pushHistory(id);
+      // Signature mode must use the transparent foreground, never an older
+      // shadow-removal result that could visually hide the signature.
+      s.shadowImg=null;
+      s.foregroundImg=out;
+      s.fillColor='transparent';
+      s.mode='sig';
+      document.getElementById(`container-${id}`)?.classList.add('signature-transparent');
+      processImage(id);
+      hideLoading(id);
+      setStatus(id,'Transparent signature ready • Copy Sign / Save Sign PNG');
+    };
+    out.onerror=()=>{
+      hideLoading(id);
+      setStatus(id,'Signature BG removal failed');
+      alert('Could not decode the transparent signature. Please try a clearer image.');
+    };
+    out.src=url;
+  }catch(err){
+    console.error('Signature BG removal failed:',err);
+    hideLoading(id);
+    setStatus(id,'Signature BG removal failed');
+    alert('Could not remove the signature background. Please try a clearer signature image.');
+  }
+}
+
+async function removeBackgroundAI(id){
+  const s=state[id];
+  if(!s.currentImg)return;
+
+  // The MediaPipe selfie model is designed for people, not handwritten
+  // signatures. Using it on a signature can classify the entire image as
+  // background and produce a blank transparent result.
+  if(s.mode==="sig"){
+    removeSignatureBackground(id);
+    return;
+  }
+
+  showLoading(id,'AI background removal loading...');
+  setStatus(id,'Removing background...');
+  try{
+    const source=s.currentImg;
+    const segmenter=await getImageSegmenter();
+    const result=segmenter.segment(source);
+    if(!result || !result.confidenceMasks || result.confidenceMasks.length<6){
+      throw new Error('MediaPipe mask unavailable.');
+    }
+
+    const baseMask=buildBaseMultiMask(result);
+    lastSegmentationMask[id]={source,alpha:baseMask.alpha,mw:baseMask.mw,mh:baseMask.mh};
+
+    const edge=Number(document.getElementById(`bg-edge-${id}`)?.value||55);
+    const clean=Number(document.getElementById(`bg-clean-${id}`)?.value||25);
+    const feather=Number(document.getElementById(`bg-feather-${id}`)?.value||35);
+    const refined=buildRefinedMask(lastSegmentationMask[id],edge,clean,feather);
+    const url=applyAlphaToSource(source,refined,edge);
+
+    await new Promise((resolve,reject)=>{
+      const out=new Image();
+      out.onload=()=>{
+        pushHistory(id);
+        s.foregroundImg=out;
+        s.fillColor='transparent';
+        processImage(id);
+        hideLoading(id);
+        setStatus(id,'AI background removed successfully');
+        try{result.close?.();}catch{}
+        resolve();
+      };
+      out.onerror=()=>{
+        try{result.close?.();}catch{}
+        reject(new Error('Image decoding failed for segmentation result'));
+      };
+      out.src=url;
+    });
+  }catch(err){
+    console.error('AI BG removal failed:',err);
+    try{
+      fallbackColorDistanceBG(id);
+      hideLoading(id);
+      setStatus(id,'Fallback BG removal applied');
+    }catch(localErr){
+      console.error(localErr);
+      hideLoading(id);
+      setStatus(id,'BG removal failed');
+    }
+  }
+}
+
+function fallbackColorDistanceBG(id){
+  const s=state[id];
+  if(!s.currentImg)return;
+
+  const src=s.currentImg;
+  const w=src.naturalWidth||src.width, h=src.naturalHeight||src.height;
+  const c=document.createElement('canvas');
+  c.width=w; c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(src,0,0,w,h);
+
+  const im=ctx.getImageData(0,0,w,h), d=im.data;
+  const sample=[];
+  const step=Math.max(1,Math.floor(Math.min(w,h)/140));
+
+  for(let y=0;y<h;y+=step){
+    for(let x=0;x<w;x+=step){
+      if(x<Math.max(3,w*.06)||x>w-Math.max(3,w*.06)||
+         y<Math.max(3,h*.06)||y>h-Math.max(3,h*.06)){
+        const i=(y*w+x)*4;
+        sample.push([d[i],d[i+1],d[i+2]]);
+      }
+    }
+  }
+
+  const avg=sample.length
+    ? sample.reduce((a,p)=>[a[0]+p[0],a[1]+p[1],a[2]+p[2]],[0,0,0]).map(v=>v/sample.length)
+    : [255,255,255];
+
+  for(let i=0;i<d.length;i+=4){
+    const dist=Math.hypot(d[i]-avg[0],d[i+1]-avg[1],d[i+2]-avg[2]);
+    const lum=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+
+    // Preserve dark foreground while removing a near-uniform background.
+    let a;
+    if(lum<105) a=1;
+    else if(dist<28) a=0;
+    else a=clamp01((dist-28)/28);
+
+    if(lum>245 && dist<70) a=0;
+    d[i+3]=Math.round(255*a);
+  }
+
+  ctx.putImageData(im,0,0);
+
+  const fg=new Image();
+  fg.onload=()=>{
+    pushHistory(id);
+    s.foregroundImg=fg;
+    s.fillColor='transparent';
+    processImage(id);
+  };
+  fg.src=c.toDataURL('image/png');
+}
+
+function setBGColor(id,color){pushHistory(id);state[id].fillColor=color;state[id].bgImage=null;const p=document.getElementById(`picker-${id}`);if(p && color!=="transparent")p.value=color;processImage(id);setStatus(id,color==="transparent"?"Background: Transparent":`Background fill: ${color}`)}
+function enhanceImage(id){
+  const s=state[id];if(!s.currentImg)return;
+  pushHistory(id);
+  document.getElementById(`shadow-${id}`).value=40;
+  document.getElementById(`contrast-${id}`).value=130;
+  document.getElementById(`bright-${id}`).value=115;
+  processImage(id);
+  setStatus(id,"Image enhancement applied");
+}
+
+function processImage(id){
+  const s=state[id];if(!s.currentImg)return;
+  const canvas=document.getElementById(`canvas-${id}`),ctx=canvas.getContext("2d",{willReadFrequently:true});
+  const w=canvas.width,h=canvas.height;
+  ctx.save();ctx.clearRect(0,0,w,h);
+  if(s.bgImage){
+    ctx.drawImage(s.bgImage,0,0,w,h);
+  }else if(s.fillColor!=="transparent"){
+    ctx.fillStyle=s.fillColor;ctx.fillRect(0,0,w,h);
+  }
+  const img=(s.mode==="sig" && s.foregroundImg) ? s.foregroundImg : (s.shadowImg||s.foregroundImg||s.currentImg);
+  if(!img){ ctx.restore(); return; }
+  const bright=+document.getElementById(`bright-${id}`).value;
+  const contrast=+document.getElementById(`contrast-${id}`).value;
+  const shadow=+document.getElementById(`shadow-${id}`).value;
+  const angle=+document.getElementById(`fine-angle-${id}`).value;
+  const shadowLift=1+Math.max(0,shadow)/250;
+  ctx.translate(w/2+s.offsetX,h/2+s.offsetY);ctx.rotate(angle*Math.PI/180);
+  ctx.filter=`brightness(${bright*shadowLift}%) contrast(${contrast}%)`;
+  ctx.drawImage(img,-w/2,-h/2,w,h);ctx.restore();
+  // Apply ink tint on the transparent signature preview only; do not recolor a chosen background.
+  if(s.mode==="sig" && s.foregroundImg && !s.bgImage && s.fillColor==="transparent"){
+    const color=document.getElementById(`signature-color-${id}`)?.value;
+    const rgb=color?.match(/[0-9a-f]{2}/gi)?.map(v=>parseInt(v,16));
+    if(rgb && rgb.length===3){
+      const imageData=ctx.getImageData(0,0,w,h),px=imageData.data;
+      for(let i=0;i<px.length;i+=4){if(px[i+3]===0)continue;px[i]=rgb[0];px[i+1]=rgb[1];px[i+2]=rgb[2];}
+      ctx.putImageData(imageData,0,0);
+    }
+  }
+}
+
+function setSignatureColor(id, color){
+  const s=state[id];
+  if(!s || !s.foregroundImg){
+    setStatus(id,'Choose an ink color after clicking Remove BG');
+    return;
+  }
+  setStatus(id,`Signature ink color set to ${color.toUpperCase()}`);
+  processImage(id);
+}
+
+function renderTransparentSignatureCanvas(id){
+  const s=state[id];
+  if(!s || !s.foregroundImg)return null;
+  const src=document.getElementById(`canvas-${id}`);
+  if(!src || !src.width || !src.height)return null;
+
+  const out=document.createElement('canvas');
+  out.width=src.width; out.height=src.height;
+  const ctx=out.getContext('2d');
+  ctx.clearRect(0,0,out.width,out.height);
+
+  const img=s.foregroundImg;
+  const bright=+document.getElementById(`bright-${id}`).value;
+  const contrast=+document.getElementById(`contrast-${id}`).value;
+  const shadow=+document.getElementById(`shadow-${id}`).value;
+  const angle=+document.getElementById(`fine-angle-${id}`).value;
+
+  ctx.save();
+  ctx.translate(out.width/2+s.offsetX,out.height/2+s.offsetY);
+  ctx.rotate(angle*Math.PI/180);
+  ctx.filter=`brightness(${bright*(1+Math.max(0,shadow)/250)}%) contrast(${contrast}%)`;
+  ctx.drawImage(img,-out.width/2,-out.height/2,out.width,out.height);
+  ctx.restore();
+
+  // Recolor only visible signature pixels; preserve each pixel’s alpha for transparency/soft edges.
+  const color=document.getElementById(`signature-color-${id}`)?.value;
+  if(color){
+    const rgb=color.match(/[0-9a-f]{2}/gi)?.map(v=>parseInt(v,16));
+    if(rgb && rgb.length===3){
+      const imageData=ctx.getImageData(0,0,out.width,out.height);
+      const px=imageData.data;
+      for(let i=0;i<px.length;i+=4){
+        if(px[i+3]===0)continue;
+        px[i]=rgb[0]; px[i+1]=rgb[1]; px[i+2]=rgb[2];
+      }
+      ctx.putImageData(imageData,0,0);
+    }
+  }
+  return out;
+}
+
+function downloadCanvasPNG(id,filename,transparent=false){
+  const source=document.getElementById(`canvas-${id}`);
+  if(!source || !state[id].currentImg)return;
+
+  let out=source;
+  if(transparent){
+    out=renderTransparentSignatureCanvas(id);
+    if(!out){
+      alert('Please click Remove BG first.');
+      return;
+    }
+  }
+
+  const a=document.createElement("a");
+  a.download=filename;
+  a.href=out.toDataURL("image/png");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function copySignaturePNG(id){
+  const s=state[id];
+  if(!s.currentImg){alert('Please upload a signature first.');return;}
+  if(!s.foregroundImg){
+    alert('For a transparent signature, click Remove BG first.');
+    return;
+  }
+  const out=renderTransparentSignatureCanvas(id);
+  if(!out){alert('Transparent signature is not ready.');return;}
+
+  try{
+    if(!navigator.clipboard || !window.ClipboardItem){
+      throw new Error('Image clipboard is not supported in this browser context.');
+    }
+    const blob=await new Promise(resolve=>out.toBlob(resolve,'image/png'));
+    if(!blob)throw new Error('PNG conversion failed.');
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    setStatus(id,'Signature copied as transparent PNG • paste with Ctrl+V');
+  }catch(err){
+    console.error('Copy signature failed:',err);
+    setStatus(id,'Copy unavailable • use Save Sign PNG');
+    alert('Direct image copy is not available in this browser/file context. Use Save Sign PNG, then paste the PNG where needed.');
+  }
+}
+
+function saveSignaturePNG(id){
+  const s=state[id];
+  if(!s.currentImg){alert("Please upload a signature first.");return;}
+  if(!s.foregroundImg){
+    alert("For a clean signature PNG, click Remove BG first.");
+    return;
+  }
+  downloadCanvasPNG(id,`signature-pane${id}.png`,true);
+  setStatus(id,"Signature saved as transparent PNG");
+}
+
+function saveAllImages(){
+  [1,2].forEach(id=>{
+    if(state[id].currentImg){
+      const isSign=state[id].mode==="sig" && !!state[id].foregroundImg;
+      downloadCanvasPNG(id,isSign?`signature-pane${id}.png`:`docfix-pane${id}.png`,isSign);
+    }
+  });
+}
+
+function isFrameActive(id){
+  return !!document.querySelector(`#container-${id} .crop-frame`)?.classList.contains('active');
+}
+
+function getFrameSpec(id){
+  const frameEl=document.querySelector(`#container-${id} .crop-frame`);
+  const selected=Math.max(1,Math.min(5,Number(document.getElementById(`frame-${id}`)?.value)||3));
+  const color=document.getElementById(`frame-color-${id}`)?.value || '#00e5ff';
+  const cssWidth=frameEl ? parseFloat(getComputedStyle(frameEl).borderTopWidth||selected) : selected;
+  return {
+    active:!!frameEl?.classList.contains('active'),
+    color,
+    uiWidth:Math.max(1,Number.isFinite(cssWidth)?cssWidth:selected),
+    selected
+  };
+}
+
+/*
+ * Single canonical export renderer.
+ *
+ * The editor frame is a DOM overlay, not part of the canvas pixels. Older
+ * print paths reconstructed it independently, which made screen/print output
+ * diverge. All print/export paths now come through this function.
+ */
+function renderExportCanvas(id,{includeFrame=true}={}){
+  const source=document.getElementById(`canvas-${id}`);
+  if(!source || !source.width || !source.height) return null;
+
+  const out=document.createElement('canvas');
+  out.width=source.width;
+  out.height=source.height;
+  const ctx=out.getContext('2d');
+  ctx.drawImage(source,0,0);
+
+  const frame=getFrameSpec(id);
+  if(includeFrame && frame.active){
+    /*
+     * Scale the visual frame with the exported bitmap. This keeps a 2–5 px
+     * editor frame visible after a large image is printed at A4/photo size.
+     */
+    const scale=Math.max(1,Math.min(4,Math.max(out.width,out.height)/1200));
+    const lineWidth=Math.max(1,Math.round(frame.selected*scale));
+    const inset=lineWidth/2;
+
+    ctx.save();
+    ctx.strokeStyle=frame.color;
+    ctx.lineWidth=lineWidth;
+    ctx.strokeRect(inset,inset,Math.max(0,out.width-lineWidth),Math.max(0,out.height-lineWidth));
+    ctx.restore();
+  }
+
+  return out;
+}
+
+function canvasDataURL(id,includeFrame=true){
+  try{
+    const out=renderExportCanvas(id,{includeFrame});
+    return out ? out.toDataURL('image/png') : null;
+  }catch(err){
+    console.error('Export render failed',err);
+    const source=document.getElementById(`canvas-${id}`);
+    try{return source?.toDataURL('image/png')||null}catch(e){return null}
+  }
+}
+
+function mmToPx(mm,dpi=300){return Math.round(mm*dpi/25.4);}
+
+/*
+ * Print-window architecture:
+ * 1) The popup is created synchronously from the user's button click.
+ * 2) It contains already-materialized data-URL images.
+ * 3) The popup owns its own print trigger; it no longer calls a parent
+ *    function through window.opener (fragile in file:///browser contexts).
+ * 4) A visible fallback Print button remains available if Chrome suppresses
+ *    an automatic print dialog.
+ */
+function openPrintWindow(title,htmlContent){
+  /*
+   * IMPORTANT: never call print() immediately after document.write().
+   * Chrome can open the print preview before the popup document has
+   * finished parsing/painting its data-URL images, which produces a blank
+   * preview/page. The popup now owns the print lifecycle and waits until
+   * the document is fully loaded and every image has decoded.
+   */
+  const w=window.open('about:blank','_blank','width=900,height=1100');
+  if(!w){
+    alert('Pop-up blocked. Please allow pop-ups for DocFix Pro Studio, then click Print again.');
+    return null;
+  }
+
+  try{
+    w.document.open();
+    w.document.write(htmlContent);
+    w.document.close();
+    w.document.title=title;
+    w.focus();
+    return w;
+  }catch(err){
+    console.error('Print window creation failed',err);
+    try{w.close()}catch(e){}
+    alert('Could not prepare the print page. Please try again.');
+    return null;
+  }
+}
+
+/* Kept for compatibility with any older saved/bookmarked code. */
+function printWhenReady(w){
+  if(!w || w.closed)return;
+  const imgs=[...w.document.images];
+  Promise.all(imgs.map(img=>new Promise(resolve=>{
+    if(img.complete && img.naturalWidth>0)return resolve();
+    img.onload=resolve;
+    img.onerror=resolve;
+  }))).then(()=>{
+    setTimeout(()=>{try{w.focus();w.print()}catch(e){console.error('Print failed',e)}},120);
+  });
+}
+
+function printWindowScaffold(title,body,extraCSS=''){
+  const safeTitle=String(title).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${safeTitle}</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#fff;color:#000}
+  body{font-family:Arial,sans-serif}
+  .print-toolbar{
+    position:fixed;top:10px;right:10px;z-index:9999;
+    display:flex;gap:8px;align-items:center;
+    padding:8px 10px;background:rgba(15,23,42,.94);color:#fff;
+    border-radius:8px;font:600 12px Arial,sans-serif;
+    box-shadow:0 4px 14px rgba(0,0,0,.25)
+  }
+  .print-toolbar button{
+    border:0;border-radius:5px;padding:7px 12px;cursor:pointer;
+    background:#10b981;color:#022c22;font-weight:700
+  }
+  .print-toolbar span{opacity:.85}
+  @media print{
+    .print-toolbar{display:none!important}
+  }
+  ${extraCSS}
+</style>
+</head>
+<body>
+<div class="print-toolbar"><button type="button" onclick="window.focus();window.print()">🖨 Print</button><span>If Chrome does not open print automatically, click Print.</span></div>
+${body}
+<script>
+(function(){
+  var started=false;
+  function waitForImages(){
+    var imgs=[].slice.call(document.images);
+    return Promise.all(imgs.map(function(img){
+      if(img.complete && img.naturalWidth>0){
+        if(img.decode){return img.decode().catch(function(){});}
+        return Promise.resolve();
+      }
+      return new Promise(function(resolve){
+        var done=function(){
+          if(img.decode){img.decode().catch(function(){}).finally(resolve);}
+          else resolve();
+        };
+        img.addEventListener('load',done,{once:true});
+        img.addEventListener('error',resolve,{once:true});
+      });
+    }));
+  }
+  function doPrint(){
+    if(started)return;
+    started=true;
+    waitForImages().then(function(){
+      // Give Chrome two paint frames after image decode before opening
+      // print preview. This prevents the intermittent blank-page preview.
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          setTimeout(function(){
+            try{window.focus();window.print();}
+            catch(e){console.error('Print failed',e);}
+          },250);
+        });
+      });
+    });
+  }
+  if(document.readyState==='complete') doPrint();
+  else window.addEventListener('load',doPrint,{once:true});
+})();
+<\/script>
+</body>
+</html>`;
+}
+
+function printIDCardFrontBack(){
+  const layout=document.getElementById('idCardLayout').value;
+  const gap=Math.max(0,Math.min(50,Number(document.getElementById('idCardGap').value)||0));
+  const frontTop=Math.max(0,Math.min(100,Number(document.getElementById('idCardFrontTop')?.value)||0));
+  const backBottom=Math.max(0,Math.min(100,Number(document.getElementById('idCardBackBottom')?.value)||0));
+  const copies=Math.max(1,Math.min(20,parseInt(document.getElementById('idCardCopies').value,10)||1));
+  const available={1:!!state[1].currentImg,2:!!state[2].currentImg};
+  let ids=layout==='front'?[1]:layout==='back'?[2]:[1,2];
+  ids=ids.filter(id=>available[id]);
+  if(!ids.length){alert('Please upload at least one image.');return;}
+
+  const cardW=85.6,cardH=54;
+  const cards=ids.map(id=>{
+    const data=canvasDataURL(id,true);
+    if(!data)return '';
+    if(layout==='frontback'){
+      if(id===1){
+        return `<div class="card-wrap card-front"><img src="${data}" class="id-card" alt="ID card front pane 1"></div>`;
+      }
+      return `<div class="card-wrap card-back"><img src="${data}" class="id-card" alt="ID card back pane 2"></div>`;
+    }
+    return `<div class="card-wrap"><img src="${data}" class="id-card" alt="ID card pane ${id}"></div>`;
+  }).join('');
+
+  const pages=Array.from({length:copies},()=>`<section class="sheet">${cards}</section>`).join('');
+
+  const css=`
+    @page{size:A4 portrait;margin:0}
+    .sheet{
+      width:210mm;height:297mm;position:relative;
+      overflow:hidden;
+      page-break-after:always;break-after:page
+    }
+    .card-wrap{width:${cardW}mm;height:${cardH}mm;position:absolute;left:50%;transform:translateX(-50%)}
+    .id-card{
+      display:block;width:${cardW}mm;height:${cardH}mm;
+      object-fit:fill;-webkit-print-color-adjust:exact;print-color-adjust:exact
+    }
+    .card-front{top:${frontTop.toFixed(3)}mm}
+    .card-back{bottom:${backBottom.toFixed(3)}mm}
+    .sheet:has(.card-front):has(.card-back) .card-front + .card-back{ }
+    /* For single-side printing, keep the existing centered placement. */
+    .sheet:not(:has(.card-front)):not(:has(.card-back)){
+      display:flex;align-items:center;justify-content:center
+    }
+    /* Gap remains available for compatibility, but Front+Back uses independent
+       top/bottom anchors so each card can be positioned precisely. */
+    @media print{html,body{width:210mm;height:297mm;margin:0;padding:0}}`;
+
+  return openPrintWindow('DocFix ID Card Print',
+    printWindowScaffold('DocFix ID Card Print',pages,css));
+}
+
+function printPhotoSheet5x5(){
+  const mode=document.getElementById('photoSheetMode')?.value||'5x5';
+  const width=Math.max(20,Math.min(42,Number(document.getElementById('photoWidthMm')?.value)||35));
+  const height=Math.max(25,Math.min(60,Number(document.getElementById('photoHeightMm')?.value)||45));
+  const rowGap=Math.max(0,Math.min(30,Number(document.getElementById('photoRowGapMm')?.value)||8));
+
+  const has1=!!state[1].currentImg;
+  const has2=!!state[2].currentImg;
+  if((mode==='5x5'||mode==='5x0')&&!has1){
+    alert('Please finish the Pane 1 photo before printing Row 1.');
+    return;
+  }
+  if((mode==='5x5'||mode==='0x5')&&!has2){
+    alert('Please finish the Pane 2 photo before printing Row 2.');
+    return;
+  }
+
+  // Exact 3 CSS-pixel cutting gap, converted to physical millimetres.
+  const cutGapPx=3;
+  const cutGapMm=cutGapPx*25.4/96;
+  const totalRowWidth=width*5+cutGapMm*4;
+  const sideMargin=Math.max(0,(210-totalRowWidth)/2);
+  if(totalRowWidth>210){
+    alert('Photo width is too large for 5 photos across A4. Use a smaller photo width.');
+    return;
+  }
+
+  const img1=has1?canvasDataURL(1,true):'';
+  const img2=has2?canvasDataURL(2,true):'';
+
+  const row1=(mode==='5x5'||mode==='5x0')
+    ?Array.from({length:5},()=>`<img src="${img1}" class="photo" alt="Pane 1 photo">`).join('')
+    :'';
+  const row2=(mode==='5x5'||mode==='0x5')
+    ?Array.from({length:5},()=>`<img src="${img2}" class="photo" alt="Pane 2 photo">`).join('')
+    :'';
+
+  const rows=[];
+  if(row1)rows.push(`<div class="photo-row row-one">${row1}</div>`);
+  if(row2)rows.push(`<div class="photo-row row-two">${row2}</div>`);
+
+  const css=`
+    @page{size:A4 portrait;margin:0}
+    .sheet{
+      position:relative;width:210mm;height:297mm;
+      overflow:hidden;background:#fff;
+      page-break-after:always;break-after:page
+    }
+    .photo-row{
+      position:absolute;left:${sideMargin.toFixed(3)}mm;
+      width:${totalRowWidth.toFixed(3)}mm;
+      display:flex;flex-direction:row;gap:${cutGapPx}px;
+      align-items:flex-start
+    }
+    .row-one{top:12mm}
+    .row-two{top:${(12+height+rowGap).toFixed(3)}mm}
+    .photo{
+      display:block;width:${width}mm;height:${height}mm;
+      object-fit:fill;margin:0;padding:0;border:0;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact
+    }
+    @media print{html,body{width:210mm;height:297mm}}`;
+
+  const page=`<section class="sheet">${rows.join('')}</section>`;
+  return openPrintWindow('DocFix Photo Sheet 5+5',
+    printWindowScaffold('DocFix Photo Sheet 5+5',page,css));
+}
+
+function triggerSafePrint(){
+  const active=[1,2].filter(id=>state[id].origImg||state[id].currentImg);
+  if(!active.length){
+    alert('Please upload at least one image before printing!');
+    return;
+  }
+
+  const imgs=active.map(id=>{
+    const data=canvasDataURL(id,true);
+    return data?`<img src="${data}" class="print-img" alt="Pane ${id}">`:'';
+  }).join('');
+
+  const css=`
+    @page{size:A4 portrait;margin:8mm}
+    body{display:flex;flex-direction:column;align-items:center;gap:5mm}
+    .print-img{
+      display:block;max-width:194mm;max-height:125mm;
+      width:auto;height:auto;object-fit:contain;
+      page-break-inside:avoid;break-inside:avoid;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact
+    }`;
+
+  return openPrintWindow('DocFix Document Print',
+    printWindowScaffold('DocFix Document Print',imgs,css));
+}
+
+function printSinglePaneA4(id){
+  const s=state[id];
+  if(!s||(!s.origImg&&!s.currentImg)){
+    alert(`Please upload an image in Pane ${id} first.`);
+    return;
+  }
+
+  const data=canvasDataURL(id,true);
+  if(!data){
+    alert('Could not prepare this pane for printing.');
+    return;
+  }
+
+  const css=`
+    @page{size:A4 portrait;margin:0}
+    html,body{width:210mm;height:297mm}
+    body{display:flex;align-items:center;justify-content:center;padding:7mm}
+    img{
+      display:block;max-width:196mm;max-height:283mm;
+      width:auto;height:auto;object-fit:contain;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact
+    }`;
+
+  return openPrintWindow(`Pane ${id} A4 Full Page`,
+    printWindowScaffold(`Pane ${id} A4 Full Page`,
+      `<img src="${data}" alt="Pane ${id} image">`,css));
+}
+
+function exitStudio(){
+  if(confirm("Exit DocFix Pro Studio? Unsaved changes will be cleared.")){
+    deleteImage(1);deleteImage(2);window.close();
+  }
+}
+
+function getSourcePoints(id){
+  const s=state[id];
+  const canvas=document.getElementById(`canvas-${id}`);
+  const box=document.getElementById(`container-${id}`);
+  if(!canvas||!box||s.corners.length!==4) throw new Error('Four crop corners are not available');
+  const cr=canvas.getBoundingClientRect();
+  const br=box.getBoundingClientRect();
+  const sx=canvas.width/Math.max(1,cr.width);
+  const sy=canvas.height/Math.max(1,cr.height);
+  const pts = s.corners.map(p=>{
+    const localX=p.x-(cr.left-br.left);
+    const localY=p.y-(cr.top-br.top);
+    return {
+      x:Math.max(0,Math.min(canvas.width-1,localX*sx)),
+      y:Math.max(0,Math.min(canvas.height-1,localY*sy))
+    };
+  });
+  
+  const area = Math.abs(
+    (pts[0].x*(pts[1].y - pts[3].y) +
+     pts[1].x*(pts[2].y - pts[0].y) +
+     pts[2].x*(pts[3].y - pts[1].y) +
+     pts[3].x*(pts[0].y - pts[2].y)) / 2
+  );
+  if(area < 1000){
+    throw new Error('Selected crop area is too small or degenerate.');
+  }
+  return pts;
+}
+
+function chooseOutputSize(id,pts){
+  const key=document.getElementById(`preset-${id}`).value;
+  const p=PRESETS[key];
+  const top=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);
+  const bottom=Math.hypot(pts[2].x-pts[3].x,pts[2].y-pts[3].y);
+  const left=Math.hypot(pts[3].x-pts[0].x,pts[3].y-pts[0].y);
+  const right=Math.hypot(pts[2].x-pts[1].x,pts[2].y-pts[1].y);
+  const naturalW=Math.max(30,Math.round((top+bottom)/2));
+  const naturalH=Math.max(30,Math.round((left+right)/2));
+  if(p)return {w:p.width,h:p.height,naturalW,naturalH,ratio:p.ratio,label:p.label,fit:true};
+  return {w:naturalW,h:naturalH,naturalW,naturalH,ratio:naturalW/naturalH,label:'Original ratio',fit:false};
+}
+
+function solveLinear8(A,b){
+  const n=8, M=A.map((r,i)=>r.slice().concat(b[i]));
+  for(let c=0;c<n;c++){
+    let piv=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[piv][c]))piv=r;
+    if(Math.abs(M[piv][c])<1e-10)throw new Error('Degenerate corner geometry');
+    [M[c],M[piv]]=[M[piv],M[c]];
+    const q=M[c][c];for(let j=c;j<=n;j++)M[c][j]/=q;
+    for(let r=0;r<n;r++)if(r!==c){const f=M[r][c];if(Math.abs(f)>1e-12)for(let j=c;j<=n;j++)M[r][j]-=f*M[c][j];}
+  }
+  return M.map(r=>r[n]);
+}
+
+function homographyToQuad(dstW,dstH,pts){
+  const d=[[0,0],[dstW,0],[dstW,dstH],[0,dstH]], A=[], b=[];
+  for(let i=0;i<4;i++){
+    const [u,v]=d[i],{x,y}=pts[i];
+    A.push([u,v,1,0,0,0,-u*x,-v*x]);b.push(x);
+    A.push([0,0,0,u,v,1,-u*y,-v*y]);b.push(y);
+  }
+  const h=solveLinear8(A,b);return [...h,1];
+}
+
+function warpQuadToRect(srcCanvas,pts,outW,outH){
+  const data=srcCanvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,srcCanvas.width,srcCanvas.height).data;
+  const dst=document.createElement('canvas');dst.width=outW;dst.height=outH;
+  const ctx=dst.getContext('2d',{willReadFrequently:true});const out=ctx.createImageData(outW,outH),H=homographyToQuad(outW,outH,pts);
+  const [h0,h1,h2,h3,h4,h5,h6,h7]=H,sw=srcCanvas.width,sh=srcCanvas.height;
+  for(let y=0;y<outH;y++)for(let x=0;x<outW;x++){
+    const den=h6*x+h7*y+1,sx=(h0*x+h1*y+h2)/den,sy=(h3*x+h4*y+h5)/den,oi=(y*outW+x)*4;
+    if(sx<0||sx>=sw-1||sy<0||sy>=sh-1){out.data[oi+3]=0;continue;}
+    const x0=Math.floor(sx),y0=Math.floor(sy),fx=sx-x0,fy=sy-y0;
+    const i00=(y0*sw+x0)*4,i10=i00+4,i01=i00+sw*4,i11=i01+4;
+    for(let k=0;k<3;k++){const a=data[i00+k]*(1-fx)+data[i10+k]*fx,b=data[i01+k]*(1-fx)+data[i11+k]*fx;out.data[oi+k]=Math.round(a*(1-fy)+b*fy)}
+    out.data[oi+3]=255;
+  }
+  ctx.putImageData(out,0,0);return dst;
+}
+
+function fitCanvasToRatio(src,targetW,targetH){
+  const target=targetW/targetH,sw=src.width,sh=src.height,srcRatio=sw/sh;
+  let cw=sw,ch=sh,sx=0,sy=0;
+  if(srcRatio>target){cw=Math.max(1,Math.round(sh*target));sx=Math.round((sw-cw)/2)}
+  else if(srcRatio<target){ch=Math.max(1,Math.round(sw/target));sy=Math.round((sh-ch)/2)}
+  const dst=document.createElement('canvas');dst.width=targetW;dst.height=targetH;const ctx=dst.getContext('2d');
+  ctx.drawImage(src,sx,sy,cw,ch,0,0,targetW,targetH);return dst;
+}
+
+function applySmartCropDewarp(id){
+  const s=state[id];if(!s.currentImg)return;
+  if(s.corners.length!==4){alert('Please set four corners first.');return}
+  try{
+    const srcCanvas=document.getElementById(`canvas-${id}`),pts=getSourcePoints(id),out=chooseOutputSize(id,pts);
+    if(out.w<30||out.h<30)return;
+    pushHistory(id);setStatus(id,'Applying precision dewarp...');showLoading(id,'Crop + dewarp...');
+    setTimeout(()=>{
+      try{
+        const src=document.createElement('canvas');src.width=srcCanvas.width;src.height=srcCanvas.height;src.getContext('2d').drawImage(s.currentImg,0,0);
+        const frameWasActive=document.querySelector(`#container-${id} .crop-frame`)?.classList.contains('active');
+        let workW=out.fit?Math.min(2400,Math.max(out.w*2,out.h*2)):out.naturalW;
+        let workH=Math.max(30,Math.round(workW/(out.naturalW/out.naturalH)));
+        let warped=warpQuadToRect(src,pts,workW,workH);
+        if(out.fit)warped=fitCanvasToRatio(warped,out.w,out.h);
+        const img=new Image();img.onload=()=>{
+          s.currentImg=img;s.origImg=img;s.foregroundImg=null;s.shadowImg=null;s.bgImage=null;
+          s.offsetX=0;s.offsetY=0;
+          srcCanvas.width=warped.width;srcCanvas.height=warped.height;
+          // The cropped/dewarped image becomes the complete canvas.
+          // Refit both canvas and container immediately so the frame follows the image,
+          // never the old preview/container dimensions.
+          const cont=document.getElementById(`container-${id}`);
+          cont.classList.add('crop-only');
+          fitPreviewToPane(id);
+          processImage(id);
+          setPinsVisibility(id,false);
+          const frame=document.querySelector(`#container-${id} .crop-frame`);
+          if(frame){
+            frame.classList.toggle('active',!!frameWasActive);
+            if(frameWasActive)updateFrame(id);
+          }
+          setStatus(id,`${out.label} • Full canvas ${warped.width} × ${warped.height}px`);hideLoading(id);
+        };img.src=warped.toDataURL('image/png');
+      }catch(err){hideLoading(id);setStatus(id,'Dewarp error: '+err.message);console.error(err)}
+    },30);
+  }catch(err){
+    alert(err.message);
+    setStatus(id, err.message);
+  }
+}
+</script>
+</body>
+</html>

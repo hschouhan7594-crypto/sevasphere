@@ -44,6 +44,9 @@
     ['tools_agreement_format_generator', 'Agreement Generator', 'Rent and other agreement formats.', 'govt', 'fa-handshake'],
     // Docs
     ['haryana-resume-generator', 'Resume Builder', 'Resume maker with several templates.', 'docs', 'fa-id-badge'],
+    // Shop management and image/document studio
+    ['shop-ledger', 'Shop Ledger', 'Track shop income, expenses, cash-in-hand and daily closing reports.', 'bill', 'fa-book-open'],
+    ['pro-studio', 'Pro Studio', 'Document cropping, photo editing, ID card layouts and print tools.', 'photo', 'fa-wand-magic-sparkles'],
     // Billing
     ['tools_bill_receipt_generator', 'Bill & Receipt Generator', 'Receipts for utility, recharge and other payments.', 'bill', 'fa-receipt'],
     // Calculators
@@ -107,7 +110,7 @@
   ];
 
   /* Put the Shop Ledger app address here; the Open button on the home banner appears automatically. */
-  var SHOP_LEDGER_URL = '';
+  var SHOP_LEDGER_URL = 'shop-ledger.html';
 
   var CSC = window.CSC = { LINKS: LINKS, TOOLS: TOOLS, CATS: CATS, tools: {} };
   CSC.libs = {

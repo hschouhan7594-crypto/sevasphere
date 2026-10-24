@@ -1,7 +1,7 @@
 {
   "project": "SevaSphere",
   "brandVersion": "1.0",
-  "foundationVersion": "1.1",
+  "foundationVersion": "1.2",
   "visualIdentity": {
     "primary": "#0b5c49",
     "accent": "#75e0b0",
@@ -20,5 +20,9 @@
   "guide": "GLOBAL_SYSTEM_GUIDE.md",
   "targetScale": "100+ static tool pages using shared styles and reusable templates",
   "deploymentStatus": "local review demo; not deployed",
-  "compatibilityPolicy": "Preserve existing tool logic while migrating page templates in audited batches."
+  "compatibilityPolicy": "Preserve existing tool logic while migrating page templates in audited batches.",
+  "integratedTools": [
+    "shop-ledger.html",
+    "pro-studio.html"
+  ]
 }
